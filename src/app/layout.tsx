@@ -9,6 +9,7 @@ import { LayoutWrapper } from '@/components/layout/LayoutWrapper';
 import { Toaster } from '@/components/ui/toaster';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { STORAGE_KEYS } from "@/lib/constants";
 
 const faustina = Faustina({
   subsets: ['latin'],
@@ -45,7 +46,7 @@ export const metadata: Metadata = {
     description: 'Controla fácilmente tus ingresos y gastos. Personaliza categorías y métodos de pago. Toma el control de tu dinero con una app moderna y segura.',
     images: [
       {
-        url: `${APP_URL}/og-image.webp`,
+        url: `${APP_URL}/logo-big.webp`,
         width: 1200,
         height: 630,
         alt: 'FinanClan Dashboard mostrando totales financieros.',
@@ -57,12 +58,13 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'FinanClan - Tu Gestor de Finanzas Personales',
     description: 'Controla fácilmente tus ingresos y gastos. Personaliza categorías y métodos de pago. Toma el control de tu dinero con una app moderna y segura.',
-    images: [`${APP_URL}/og-image.webp`],
+    images: [`${APP_URL}/logo-big.webp`],
     creator: '@dclancig',
   },
 
   icons: {
-    icon: `${APP_URL}/favicon.ico`,
+    icon: [{ url: '/favicon.webp', type: 'image/webp' }],
+    apple: [{ url: '/favicon.webp', type: 'image/webp' }],
   },
   
   robots: {
@@ -94,6 +96,7 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
+          storageKey={STORAGE_KEYS.THEME}
         >
           <LanguageProvider>
             <AuthProvider>

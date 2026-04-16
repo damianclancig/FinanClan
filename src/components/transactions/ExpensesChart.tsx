@@ -122,11 +122,12 @@ export function ExpensesChart({ expensesByCategory }: ExpensesChartProps) {
               outerRadius,
               percent,
               payload
-            }) => {
-              if (percent < 0.05) return null;
+            }: any) => {
+              if (percent === undefined || percent < 0.05) return null;
+              const angle = midAngle ?? 0;
               const radius = innerRadius + (outerRadius - innerRadius) * 1.35;
-              const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-              const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+              const x = cx + radius * Math.cos(-angle * (Math.PI / 180));
+              const y = cy + radius * Math.sin(-angle * (Math.PI / 180));
               return (
                 <text
                   x={x}

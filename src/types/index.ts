@@ -79,7 +79,7 @@ export interface Transaction {
 }
 
 export type TransactionFormValues = Omit<Transaction, "id" | "userId" | "groupId" | "billingCycleId" | "date" | "isCardPayment" | "cardId" | "isPaid" | "isSummaryPayment"> & {
-  date: Date; // Form uses Date object, but it's converted to string for backend
+  date: Date | string;
 };
 
 
@@ -531,7 +531,25 @@ export interface Translations {
   paymentForCardSummary: string;
   paymentHistory: string;
   noPaymentHistory: string;
+  // Landing Page
+  landingHeroTagline: string;
+  landingCardTitle: string;
+  landingCardDesc: string;
+  landingCtaPrompt: string;
+  landingFeature1: string;
+  landingFeature2: string;
+  landingFeature3: string;
+  landingFeature4: string;
+  landingFeature5: string;
+  landingFeature6: string;
+  // Error messages
+  invalidIconError: string;
+  notFoundOrNoPermission: string;
+  billingCycleDateError: string;
+  taxNotFoundError: string;
+  userNotAuthenticated: string;
 }
+
 
 export type DateRange = ReactDayPickerDateRange;
 

@@ -2,7 +2,7 @@
 
 import { useRouter, useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { TransactionForm, type TransactionFormValues } from "@/components/transactions/TransactionForm";
+import { TransactionForm } from "@/components/transactions/TransactionForm";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { getTransactionById, updateTransaction } from "@/app/actions/transactions";
@@ -11,7 +11,7 @@ import { getPaymentMethods } from "@/app/actions/paymentMethodActions";
 import { FormPageLayout } from "@/components/layout/FormPageLayout";
 import { EditPageLoader } from "@/components/common/EditPageLoader";
 import { useTranslations } from "@/contexts/LanguageContext";
-import type { Transaction, Category, PaymentMethod } from "@/types";
+import type { Transaction, Category, PaymentMethod, TransactionFormValues } from "@/types";
 
 export default function EditTransactionPage() {
   const router = useRouter();

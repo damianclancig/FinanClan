@@ -29,13 +29,13 @@ interface TransferDialogProps {
 }
 
 const getFormSchema = (translations: Translations, type: 'deposit' | 'withdrawal', maxAmount?: number) => z.object({
-  amount: z.coerce
-    .number({ required_error: translations.amountRequired, invalid_type_error: translations.amountRequired })
+  amount: z
+    .number({ message: translations.amountRequired })
     .positive({ message: translations.amountPositive })
     .max(maxAmount !== undefined && maxAmount > 0 ? maxAmount : Infinity, {
       message: type === 'withdrawal' ? translations.withdrawAmountError : translations.depositAmountError
     }),
-  paymentMethodId: z.string({ required_error: translations.paymentMethodRequired }),
+  paymentMethodId: z.string({ message: translations.paymentMethodRequired }),
 });
 
 export function TransferDialog({ isOpen, onOpenChange, fund, type, categories, paymentMethods, onSuccess }: TransferDialogProps) {
@@ -112,7 +112,7 @@ export function TransferDialog({ isOpen, onOpenChange, fund, type, categories, p
       categoryId: transferCategory.id,
       fundId: fund.id,
       date: new Date(),
-    });
+    }, translations);
 
     if (result.success) {
       toast({ title: translations.transferSuccess });

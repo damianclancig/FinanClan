@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { addSavingsFund } from "@/app/actions/savingsFundActions";
-import { SavingsFundForm, type SavingsFundFormSubmitValues } from "@/components/savings-funds/SavingsFundForm";
+import { SavingsFundForm } from "@/components/savings-funds/SavingsFundForm";
+import { SavingsFundFormSchemaType } from "@/components/savings-funds/form/SavingsFundFormSchema";
 import { FormPageLayout } from "@/components/layout/FormPageLayout";
 import { useTranslations } from "@/contexts/LanguageContext";
 
@@ -14,7 +15,7 @@ export default function AddSavingsFundPage() {
   const { toast } = useToast();
   const { translations } = useTranslations();
 
-  const handleFormSubmit = async (values: SavingsFundFormSubmitValues) => {
+  const handleFormSubmit = async (values: SavingsFundFormSchemaType) => {
     if (!dbUser) {
       toast({ title: translations.errorTitle, description: "You must be logged in to perform this action.", variant: "destructive" });
       return;

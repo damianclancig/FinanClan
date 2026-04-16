@@ -1,7 +1,7 @@
 'use server';
 
-import { ObjectId } from 'mongodb';
-import { getDb, mapMongoDocumentTax } from '@/lib/actions-helpers';
+import { ObjectId, type Collection, type Document } from 'mongodb';
+import { getDb, mapMongoDocumentTax, insertAndReturn } from '@/lib/actions-helpers';
 import type { Tax, TaxFormValues, Translations } from '@/types';
 import {
   validateObjectId,
@@ -17,44 +17,48 @@ import {
   CacheTag,
 } from '@/lib/cache-helpers';
 
+async function migrateLegacyTaxes(userId: string, taxesCollection: Collection<Document>) {
+  // One-time migration for documents without a 'year'
+  const legacyTaxes = await taxesCollection.find({ userId, year: { $exists: false } }).toArray();
+
+  if (legacyTaxes.length > 0) {
+    const bulkOps = [];
+    for (const tax of legacyTaxes) {
+      let year = new Date(tax.date).getUTCFullYear();
+      let month = new Date(tax.date).getUTCMonth();
+
+      // Check if a document with the new values already exists
+      let existing = await taxesCollection.findOne({ userId, name: tax.name, month, year });
+
+      while (existing) {
+        // If it exists, increment the month and possibly the year
+        month++;
+        if (month > 11) {
+          month = 0;
+          year++;
+        }
+        existing = await taxesCollection.findOne({ userId, name: tax.name, month, year });
+      }
+
+      bulkOps.push({
+        updateOne: {
+          filter: { _id: tax._id },
+          update: { $set: { year, month, date: new Date(tax.date) } }
+        }
+      });
+    }
+    if (bulkOps.length > 0) {
+      await taxesCollection.bulkWrite(bulkOps);
+    }
+  }
+}
+
 export async function getTaxes(): Promise<Tax[] | ErrorResponse> {
   try {
     const { id: userId } = await getAuthenticatedUser();
     const { taxesCollection } = await getDb();
 
-    // One-time migration for documents without a 'year'
-    const legacyTaxes = await taxesCollection.find({ userId, year: { $exists: false } }).toArray();
-
-    if (legacyTaxes.length > 0) {
-      const bulkOps = [];
-      for (const tax of legacyTaxes) {
-        let year = new Date(tax.date).getUTCFullYear();
-        let month = new Date(tax.date).getUTCMonth();
-
-        // Check if a document with the new values already exists
-        let existing = await taxesCollection.findOne({ userId, name: tax.name, month, year });
-
-        while (existing) {
-          // If it exists, increment the month and possibly the year
-          month++;
-          if (month > 11) {
-            month = 0;
-            year++;
-          }
-          existing = await taxesCollection.findOne({ userId, name: tax.name, month, year });
-        }
-
-        bulkOps.push({
-          updateOne: {
-            filter: { _id: tax._id },
-            update: { $set: { year, month, date: new Date(tax.date) } }
-          }
-        });
-      }
-      if (bulkOps.length > 0) {
-        await taxesCollection.bulkWrite(bulkOps);
-      }
-    }
+    await migrateLegacyTaxes(userId, taxesCollection);
 
     const taxes = await taxesCollection.find({ userId }).sort({ year: -1, month: -1 }).toArray();
     return taxes.map(mapMongoDocumentTax);
@@ -63,7 +67,7 @@ export async function getTaxes(): Promise<Tax[] | ErrorResponse> {
   }
 }
 
-export async function getTaxById(id: string): Promise<Tax | ErrorResponse> {
+export async function getTaxById(id: string, translations: Translations): Promise<Tax | ErrorResponse> {
   try {
     const { id: userId } = await getAuthenticatedUser();
     validateObjectId(id, 'tax ID');
@@ -72,7 +76,7 @@ export async function getTaxById(id: string): Promise<Tax | ErrorResponse> {
     const tax = await taxesCollection.findOne({ _id: new ObjectId(id), userId });
 
     if (!tax) {
-      return { error: 'Tax not found.' };
+      return { error: translations.taxNotFoundError };
     }
 
     return mapMongoDocumentTax(tax);
@@ -127,17 +131,13 @@ export async function addTax(data: TaxFormValues, translations: Translations): P
       isPaid: false
     };
 
-    const result = await taxesCollection.insertOne(documentToInsert);
-    const insertedId = result.insertedId;
-
-    revalidateUserTag(userId, CacheTag.TAXES);
-
-    const newTax = await taxesCollection.findOne({ _id: insertedId });
-    if (!newTax) {
-      throw new Error('Could not find the newly created tax.');
-    }
-
-    return mapMongoDocumentTax(newTax);
+    return await insertAndReturn(
+      taxesCollection,
+      documentToInsert,
+      mapMongoDocumentTax,
+      userId,
+      CacheTag.TAXES
+    );
   } catch (error) {
     return handleActionError(error, 'add tax');
   }
@@ -152,7 +152,7 @@ export async function updateTax(id: string, data: Partial<Pick<Tax, 'name' | 'am
 
     const existingTax = await taxesCollection.findOne({ _id: new ObjectId(id), userId });
     if (!existingTax) {
-      return { error: 'Tax not found or you do not have permission to edit it.' };
+      return { error: translations.notFoundOrNoPermission };
     }
 
     if (existingTax.isPaid) {
@@ -179,7 +179,7 @@ export async function updateTax(id: string, data: Partial<Pick<Tax, 'name' | 'am
     );
 
     if (result.matchedCount === 0) {
-      return { error: 'Tax not found or you do not have permission to edit it.' };
+      return { error: translations.notFoundOrNoPermission };
     }
 
     revalidateUserTag(userId, CacheTag.TAXES);

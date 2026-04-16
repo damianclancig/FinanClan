@@ -112,7 +112,7 @@ export function BackgroundWrapper({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-full w-full overflow-hidden bg-background">
       {/* Fondo original exactamente como lo tenías */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 animate-[gradient_15s_ease_infinite]"></div>
+      <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-accent/10 animate-[gradient_15s_ease_infinite]"></div>
       
       {/* Estrellas fugaces */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">

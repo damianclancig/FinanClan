@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
-import { TransactionForm, type TransactionFormValues } from "@/components/transactions/TransactionForm";
+import { TransactionForm } from "@/components/transactions/TransactionForm";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { addTransaction, markTaxAsPaid } from "@/app/actions/transactions";
@@ -11,7 +11,7 @@ import { getPaymentMethods } from "@/app/actions/paymentMethodActions";
 import { FormPageLayout } from "@/components/layout/FormPageLayout";
 import { EditPageLoader } from "@/components/common/EditPageLoader";
 import { useTranslations } from "@/contexts/LanguageContext";
-import type { Category, PaymentMethod } from "@/types";
+import type { Category, PaymentMethod, TransactionFormValues } from "@/types";
 
 export default function AddTransactionPage() {
   const router = useRouter();

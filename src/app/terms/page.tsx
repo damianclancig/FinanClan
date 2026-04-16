@@ -1,82 +1,82 @@
 
-"use client";
+"use client"
 
-import { useTranslations } from "@/contexts/LanguageContext";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { FileText, Shield, Server, AlertTriangle, GitBranch, ChevronsRight } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import React from "react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { useTranslations } from "@/contexts/LanguageContext"
+import { ArrowLeft } from "lucide-react"
 
 export default function TermsPage() {
-    const { translations } = useTranslations();
+  const { translations } = useTranslations()
 
-    const sections = [
-        {
-            title: translations.termsAcceptance,
-            icon: ChevronsRight,
-            content: translations.termsAcceptanceText,
-        },
-        {
-            title: translations.termsServiceDescription,
-            icon: Server,
-            content: translations.termsServiceDescriptionText,
-        },
-        {
-            title: translations.termsPrivacyAndData,
-            icon: Shield,
-            content: [
-                translations.termsPrivacyAndDataText1,
-                translations.termsPrivacyAndDataText2,
-                translations.termsPrivacyAndDataText3,
-            ],
-        },
-        {
-            title: translations.termsLimitationOfLiability,
-            icon: AlertTriangle,
-            content: translations.termsLimitationOfLiabilityText,
-        },
-        {
-            title: translations.termsIntellectualProperty,
-            icon: GitBranch,
-            content: translations.termsIntellectualPropertyText,
-        },
-        {
-            title: translations.termsChangesAndTermination,
-            icon: GitBranch,
-            content: translations.termsChangesAndTerminationText,
-        },
-    ];
+  if (!translations) return null;
 
-    return (
-        <div className="container mx-auto max-w-4xl py-8 px-4">
-            <Card className="w-full border-2 border-primary/50 shadow-2xl rounded-2xl bg-card/80 backdrop-blur-sm">
-                <CardHeader className="text-center p-8">
-                    <div className="flex justify-center mb-4">
-                        <FileText className="h-16 w-16 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl md:text-2xl">{translations.termsAndConditions}</CardTitle>
-                    <CardDescription className="text-base text-muted-foreground pt-2">
-                        {translations.termsLastUpdated}
-                    </CardDescription>
-                </CardHeader>
-                <Separator/>
-                <CardContent className="p-8 pt-6 space-y-8">
-                    {sections.map((section, index) => (
-                        <div key={index}>
-                            <h2 className="flex items-center text-lg md:text-xl font-semibold mb-3">
-                                <section.icon className="h-6 w-6 mr-3 text-primary shrink-0" />
-                                {section.title}
-                            </h2>
-                            {Array.isArray(section.content) ? (
-                                <ul className="space-y-3 pl-6 text-base text-foreground/90 list-disc">
-                                    {section.content.map((item, i) => <li key={i}>{item}</li>)}
-                                </ul>
-                            ) : (
-                                <p className="text-base text-foreground/90">{section.content}</p>
-                            )}
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
-        </div>
-    );
+  return (
+    <div className="container mx-auto py-8 px-4 max-w-4xl min-h-screen">
+      <Card className="shadow-lg border-primary/20 bg-card/50 backdrop-blur-sm">
+        <CardHeader className="border-b pb-6 mb-6">
+          <CardTitle className="text-3xl font-bold text-primary">
+            {translations.termsAndConditions || "Términos y Condiciones"}
+          </CardTitle>
+          <CardDescription className="text-base mt-2">
+            {translations.termsLastUpdated?.replace("{date}", "15/04/2026") || "Última actualización: 15/04/2026"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-8 text-muted-foreground leading-relaxed pb-10">
+          <section className="space-y-3">
+            <h3 className="text-xl font-semibold text-foreground">
+              {translations.termsAcceptance}
+            </h3>
+            <p>{translations.termsAcceptanceText}</p>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xl font-semibold text-foreground">
+              {translations.termsServiceDescription}
+            </h3>
+            <p>{translations.termsServiceDescriptionText}</p>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xl font-semibold text-foreground">
+              {translations.termsPrivacyAndData}
+            </h3>
+            <p>{translations.termsPrivacyAndDataText}</p>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xl font-semibold text-foreground">
+              {translations.termsLimitationOfLiability}
+            </h3>
+            <p>{translations.termsLimitationOfLiabilityText}</p>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xl font-semibold text-foreground">
+              {translations.termsIntellectualProperty}
+            </h3>
+            <p>{translations.termsIntellectualPropertyText}</p>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xl font-semibold text-foreground">
+              {translations.termsChangesAndTermination}
+            </h3>
+            <p>{translations.termsChangesAndTerminationText}</p>
+          </section>
+
+          <div className="pt-6 border-t">
+            <Link href="/" passHref>
+              <Button variant="ghost" className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                {translations.back || "Volver"}
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }

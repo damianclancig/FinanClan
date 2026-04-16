@@ -9,7 +9,8 @@ import { FormPageLayout } from "@/components/layout/FormPageLayout";
 import { EditPageLoader } from "@/components/common/EditPageLoader";
 import { useTranslations } from "@/contexts/LanguageContext";
 import type { SavingsFund } from "@/types";
-import { SavingsFundForm, type SavingsFundFormSubmitValues } from "@/components/savings-funds/SavingsFundForm";
+import { SavingsFundForm } from "@/components/savings-funds/SavingsFundForm";
+import { SavingsFundFormSchemaType } from "@/components/savings-funds/form/SavingsFundFormSchema";
 
 export default function EditSavingsFundPage() {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function EditSavingsFundPage() {
     fetchData();
   }, [id, dbUser, router, toast, translations]);
 
-  const handleFormSubmit = async (values: SavingsFundFormSubmitValues) => {
+  const handleFormSubmit = async (values: SavingsFundFormSchemaType) => {
     if (!dbUser || !fund) return;
 
     // Convert Date to ISO string for the action
@@ -59,7 +60,7 @@ export default function EditSavingsFundPage() {
       targetDate: values.targetDate ? values.targetDate.toISOString() : undefined,
     };
 
-    const result = await updateSavingsFund(fund.id, formattedValues as any);
+    const result = await updateSavingsFund(fund.id, formattedValues as any, translations);
 
     if (result && 'error' in result) {
       toast({ title: translations.errorTitle, description: result.error, variant: "destructive" });

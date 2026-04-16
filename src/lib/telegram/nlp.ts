@@ -1,21 +1,5 @@
-import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/googleai';
 import type { ParsedTransaction, TransactionType } from '@/types';
 import { parseDateExpression, formatDateForDisplay } from './dateParser';
-
-/**
- * Natural Language Processing for Telegram messages
- * Uses Gemini AI to parse transaction information from natural language
- */
-
-// Initialize Genkit with Google AI
-const ai = genkit({
-  plugins: [
-    googleAI({
-      apiKey: process.env.GEMINI_API_KEY,
-    }),
-  ],
-});
 
 const transactionParserPrompt = `Eres un asistente experto en interpretar transacciones financieras en español argentino coloquial.
 
@@ -131,18 +115,38 @@ export async function parseTransactionMessage(
     const prompt = `${dynamicPrompt}\n\nMensaje del usuario: "${message}"`;
     
     console.log('Calling Gemini API...');
-    const result = await ai.generate({
-      model: 'googleai/gemini-2.0-flash',
-      prompt,
-      config: {
-        temperature: 0.3, // Increased for more flexible parsing
-        maxOutputTokens: 300,
+    
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY is not configured');
+    }
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 300,
+        }
+      })
     });
 
-    console.log('Gemini raw response:', result.text);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API Error:', response.status, errorText);
+      throw new Error(`Gemini API returned ${response.status}`);
+    }
+
+    const data = await response.json();
+    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    console.log('Gemini raw response:', resultText);
     
-    const responseText = result.text.trim();
+    const responseText = resultText.trim();
     
     // Remove markdown code blocks if present
     const jsonText = responseText

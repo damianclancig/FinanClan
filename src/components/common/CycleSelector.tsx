@@ -88,7 +88,7 @@ export function CycleSelector({ cycles, selectedCycle, onSelectCycle }: CycleSel
   return (
     <div className="relative">
       {showGradient && (
-        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
+        <div className="absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-background to-transparent pointer-events-none z-10" />
       )}
       <div
         ref={scrollContainerRef}

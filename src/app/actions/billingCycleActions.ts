@@ -1,12 +1,13 @@
 
 'use server';
 
-import { getDb, mapMongoDocumentBillingCycle } from '@/lib/actions-helpers';
+import { getDb, mapMongoDocumentBillingCycle, insertAndReturn } from '@/lib/actions-helpers';
 import { validateUserId } from '@/lib/validation-helpers';
 import { handleActionError } from '@/lib/error-helpers';
 import { revalidateUserTag, revalidateUserTags, CacheTag, TagGroups } from '@/lib/cache-helpers';
 import { getAuthenticatedUser } from '@/lib/auth-server';
-import type { BillingCycle } from '@/types';
+import type { BillingCycle, Translations } from '@/types';
+import { type Collection, type Document, type WithId, type Filter } from 'mongodb';
 
 export async function getBillingCycles(): Promise<BillingCycle[]> {
   const { id: userId } = await getAuthenticatedUser();
@@ -27,31 +28,36 @@ export async function getCurrentBillingCycle(): Promise<BillingCycle | null> {
   return getInternalCurrentBillingCycle(id);
 }
 
+async function repairActiveBillingCycles(userId: string, activeCycles: WithId<Document>[], billingCyclesCollection: Collection<Document>): Promise<BillingCycle> {
+  const mostRecentCycle = activeCycles[0];
+  const cyclesToCloseIds = activeCycles.slice(1).map(c => c._id);
+
+  const newStartDate = new Date(mostRecentCycle.startDate);
+  const endDateForOldCycle = new Date(newStartDate.getTime() - 1);
+
+  await billingCyclesCollection.updateMany(
+    { _id: { $in: cyclesToCloseIds } },
+    { $set: { endDate: endDateForOldCycle } }
+  );
+
+  revalidateUserTag(userId, CacheTag.BILLING_CYCLES);
+  return mapMongoDocumentBillingCycle(mostRecentCycle);
+}
+
 export async function getInternalCurrentBillingCycle(userId: string): Promise<BillingCycle | null> {
   if (!userId) return null;
   try {
     const { billingCyclesCollection } = await getDb();
 
-    const activeCycles = await billingCyclesCollection.find({
+    const query: Filter<Document> = {
       userId,
       $or: [{ endDate: { $exists: false } }, { endDate: null }]
-    }).sort({ startDate: -1 }).toArray();
+    };
+
+    const activeCycles = await billingCyclesCollection.find(query).sort({ startDate: -1 }).toArray();
 
     if (activeCycles.length > 1) {
-      const mostRecentCycle = activeCycles[0];
-      const cyclesToCloseIds = activeCycles.slice(1).map(c => c._id);
-
-      const newStartDate = new Date(mostRecentCycle.startDate);
-      const endDateForOldCycle = new Date(newStartDate.getTime() - 1);
-
-      await billingCyclesCollection.updateMany(
-        { _id: { $in: cyclesToCloseIds } },
-        { $set: { endDate: endDateForOldCycle } }
-      );
-
-      revalidateUserTag(userId, CacheTag.BILLING_CYCLES);
-      return mapMongoDocumentBillingCycle(mostRecentCycle);
-
+      return await repairActiveBillingCycles(userId, activeCycles, billingCyclesCollection);
     } else if (activeCycles.length === 1) {
       return mapMongoDocumentBillingCycle(activeCycles[0]);
     }
@@ -70,7 +76,7 @@ export async function getInternalCurrentBillingCycle(userId: string): Promise<Bi
   }
 }
 
-export async function startNewCycle(startDate: Date): Promise<BillingCycle | { error: string }> {
+export async function startNewCycle(startDate: Date, translations: Translations): Promise<BillingCycle | { error: string }> {
   try {
     const { id: userId } = await getAuthenticatedUser();
     const newCycleStartDate = startDate;
@@ -85,7 +91,7 @@ export async function startNewCycle(startDate: Date): Promise<BillingCycle | { e
     if (activeCycles.length > 0) {
       const mostRecentActiveCycle = activeCycles.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0];
       if (new Date(mostRecentActiveCycle.startDate) >= newCycleStartDate) {
-        return { error: 'The new cycle start date must be after the previous cycle\'s start date.' };
+        return { error: translations.billingCycleDateError };
       }
 
       const activeCycleIds = activeCycles.map(c => c._id);
@@ -100,19 +106,13 @@ export async function startNewCycle(startDate: Date): Promise<BillingCycle | { e
       startDate: newCycleStartDate,
     };
 
-    const result = await billingCyclesCollection.insertOne(newCycleDocument);
-    if (!result.insertedId) {
-      throw new Error('Failed to insert new billing cycle.');
-    }
-
-    revalidateUserTags(userId, TagGroups.BILLING_CYCLE_MUTATION);
-
-    const newCycle = await billingCyclesCollection.findOne({ _id: result.insertedId });
-    if (!newCycle) {
-      throw new Error('Could not find the newly created billing cycle.');
-    }
-
-    return mapMongoDocumentBillingCycle(newCycle);
+    return await insertAndReturn(
+      billingCyclesCollection,
+      newCycleDocument,
+      mapMongoDocumentBillingCycle,
+      userId,
+      TagGroups.BILLING_CYCLE_MUTATION as unknown as CacheTag[]
+    );
 
   } catch (error) {
     return handleActionError(error, 'add billing cycle');

@@ -58,7 +58,7 @@ export function revalidateUserTags(
   userId: string,
   tags: CacheTag[]
 ): void {
-  tags.forEach(tag => revalidateTag(`${tag}_${userId}`));
+  tags.forEach(tag => revalidateTag(`${tag}_${userId}`, 'max'));
 }
 
 /**
@@ -83,7 +83,7 @@ export function revalidateUserTag(
   userId: string,
   tag: CacheTag
 ): void {
-  revalidateTag(`${tag}_${userId}`);
+  revalidateTag(`${tag}_${userId}`, 'max');
 }
 
 /**
