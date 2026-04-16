@@ -275,9 +275,6 @@
   "savingsFundsProgress": "Savings Funds Progress",
   "noSavingsFundsProgressTitle": "Track Your Savings Goals",
   "noSavingsFundsProgressDesc": "To get started, open the main menu (top left) and select 'Savings Funds' to create your first goal.",
-  "completed": "Completed",
-  "noInstallmentsTitle": "Track your Installment Purchases",
-  "noInstallmentsDesc": "This chart shows your future monthly payments. To generate it, add an 'Expense' with a 'Credit Card' and select more than one installment.",
   "termsAndConditions": "Terms and Conditions",
   "termsLastUpdated": "Last updated: {date}",
   "termsAcceptance": "1. Acceptance of Terms",
@@ -285,7 +282,6 @@
   "termsServiceDescription": "2. Proper Use of the Service",
   "termsServiceDescriptionText": "You agree to use the application personally for managing and organizing your finances. The use of techniques to inject code, alter the original design, or exploit any functionality to compromise the security or experience of other users is prohibited.",
   "termsPrivacyAndData": "3. Service Availability ('As is')",
-  "termsPrivacyAndDataText": "FinanClan is provided 'as is' and 'as available', without warranties of any kind. While we make every technical effort to keep your information secure and available, we are not responsible for accidental data loss resulting from platform errors or hosting service interruptions.",
   "termsLimitationOfLiability": "4. Delegated Authentication",
   "termsLimitationOfLiabilityText": "Our platform uses federated authentication linked to Google. Access security is tied to the strength of your Google account. You are solely responsible for keeping your credentials safe. We do not collect sensitive information or passwords locally.",
   "termsIntellectualProperty": "5. Intellectual Property and Open Source",
@@ -377,5 +373,11 @@
   "notFoundOrNoPermission": "The item was not found or you do not have permission to modify it.",
   "billingCycleDateError": "The new cycle start date must be after the previous cycle's start date.",
   "taxNotFoundError": "Tax not found.",
-  "userNotAuthenticated": "User not authenticated."
+  "userNotAuthenticated": "User not authenticated.",
+  "noInstallmentsTitle": "No pending installments",
+  "noInstallmentsDesc": "You don't have any installment purchases registered for this period.",
+  "completed": "Completed",
+  "termsPrivacyAndDataText1": "We respect your privacy...",
+  "termsPrivacyAndDataText2": "We don't share data...",
+  "termsPrivacyAndDataText3": "You have full control..."
 }

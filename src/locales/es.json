@@ -275,8 +275,6 @@
   "savingsFundsProgress": "Progreso de Fondos de Ahorro",
   "noSavingsFundsProgressTitle": "Seguí tus Metas de Ahorro",
   "noSavingsFundsProgressDesc": "Para empezar, desplegá el menú principal (arriba a la izquierda) y seleccioná 'Fondos de Ahorro' para crear tu primer objetivo.",
-  "completed": "Completado",
-  "noInstallmentsTitle": "Proyecta tus Compras en Cuotas",
   "termsAndConditions": "Términos y Condiciones",
   "termsLastUpdated": "Última actualización: {date}",
   "termsAcceptance": "1. Aceptación de los Términos",
@@ -284,7 +282,6 @@
   "termsServiceDescription": "2. Uso Apropiado del Servicio",
   "termsServiceDescriptionText": "Usted se compromete a usar la aplicación de forma personal para la gestión y ordenamiento de sus finanzas. Está prohibido el uso de técnicas para inyectar código, alterar el diseño original, o explotar cualquier funcionalidad para comprometer la seguridad o la experiencia de otros usuarios.",
   "termsPrivacyAndData": "3. Disponibilidad del Servicio ('Tal como está')",
-  "termsPrivacyAndDataText": "FinanClan se ofrece 'tal como está' y 'según esté disponible', sin garantías de ningún tipo. Si bien realizamos el mayor esfuerzo técnico para mantener la información resguardada, no nos hacemos responsables por pérdidas de datos fortuitas producto de errores de plataforma o interrupciones en el servicio de hosting.",
   "termsLimitationOfLiability": "4. Autenticación Delegada",
   "termsLimitationOfLiabilityText": "Nuestra plataforma utiliza autenticación federada vinculada a Google. La seguridad del acceso está ligada a la robustez de su cuenta de Google. Usted es el único responsable de mantener sus credenciales a salvo. No recolectamos información confidencial ni contraseñas de manera local.",
   "termsIntellectualProperty": "5. Propiedad Intelectual y Código Abierto",
@@ -376,5 +373,11 @@
   "notFoundOrNoPermission": "El elemento no fue encontrado o no tienes permiso para modificarlo.",
   "billingCycleDateError": "La fecha de inicio del nuevo ciclo debe ser posterior a la fecha de inicio del ciclo anterior.",
   "taxNotFoundError": "Impuesto no encontrado.",
-  "userNotAuthenticated": "Usuario no autenticado."
+  "userNotAuthenticated": "Usuario no autenticado.",
+  "noInstallmentsTitle": "Sin cuotas pendientes",
+  "noInstallmentsDesc": "No tenés compras en cuotas registradas para este período.",
+  "completed": "Completado",
+  "termsPrivacyAndDataText1": "Respetamos su privacidad...",
+  "termsPrivacyAndDataText2": "No compartimos datos...",
+  "termsPrivacyAndDataText3": "Usted tiene control..."
 }

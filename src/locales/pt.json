@@ -374,5 +374,11 @@
   "notFoundOrNoPermission": "O item não foi encontrado ou você não tem permissão para modificá-lo.",
   "billingCycleDateError": "A data de início do novo ciclo deve ser após a data de início do ciclo anterior.",
   "taxNotFoundError": "Imposto não encontrado.",
-  "userNotAuthenticated": "Usuário não autenticado."
+  "userNotAuthenticated": "Usuário não autenticado.",
+  "noInstallmentsTitle": "Sem parcelas pendentes",
+  "noInstallmentsDesc": "Você não tem compras parceladas registradas para este período.",
+  "completed": "Concluído",
+  "termsPrivacyAndDataText1": "Respeitamos sua privacidade...",
+  "termsPrivacyAndDataText2": "Não compartilhamos dados...",
+  "termsPrivacyAndDataText3": "Você tem controle total..."
 }
