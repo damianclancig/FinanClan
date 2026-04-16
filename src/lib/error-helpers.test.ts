@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   DatabaseError,
   handleActionError,
@@ -7,8 +7,19 @@ import {
 } from './error-helpers';
 import { ValidationError } from './validation-helpers';
 
-describe('DatabaseError', () => {
-  it('should create a DatabaseError with correct properties', () => {
+describe('Error Helpers', () => {
+  let consoleSpy: any;
+
+  beforeEach(() => {
+    consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleSpy.mockRestore();
+  });
+
+  describe('DatabaseError', () => {
+    it('should create a DatabaseError with correct properties', () => {
     const originalError = new Error('Original error');
     const dbError = new DatabaseError('Database failed', originalError);
     
@@ -63,13 +74,11 @@ describe('handleActionError', () => {
   });
 
   it('should log errors to console', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const error = new Error('Test error');
     
     handleActionError(error, 'test');
     
     expect(consoleSpy).toHaveBeenCalledWith('Error test:', error);
-    consoleSpy.mockRestore();
   });
 });
 
@@ -148,5 +157,6 @@ describe('isErrorResponse', () => {
   it('should return false for arrays', () => {
     expect(isErrorResponse([])).toBe(false);
     expect(isErrorResponse([{ error: 'test' }])).toBe(false);
+  });
   });
 });
