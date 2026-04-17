@@ -15,6 +15,7 @@ coverage
 
 # misc
 .DS_Store
+.directory
 *.pem
 
 # debug
