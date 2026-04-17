@@ -24,7 +24,7 @@ interface InsightItemProps {
 
 const InsightItem: React.FC<InsightItemProps> = ({ icon: Icon, label, value, description, iconColor, isSubItem = false }) => (
     <div className={`flex items-start ${isSubItem ? 'space-x-3' : 'space-x-4'}`}>
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
             <Icon className={`h-5 w-5 ${iconColor || 'text-primary'}`} />
         </div>
         <div className="flex-1">

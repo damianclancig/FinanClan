@@ -26,9 +26,12 @@ export function Footer() {
             </a>
           </p>
         </div>
-        <div className="text-sm text-muted-foreground text-center">
+        <div className="text-sm text-muted-foreground text-center space-x-4">
              <Link href="/terms" className="font-medium underline underline-offset-4 hover:text-primary">
                 {translations.termsAndConditions}
+             </Link>
+             <Link href="/privacy" className="font-medium underline underline-offset-4 hover:text-primary">
+                {translations.privacyPolicy}
              </Link>
         </div>
         <SupportDialog />

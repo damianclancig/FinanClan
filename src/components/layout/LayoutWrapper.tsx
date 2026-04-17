@@ -18,7 +18,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   
   const loading = authLoading || langLoading;
 
-  const publicPagesWithLayout = ['/terms'];
+  const publicPagesWithLayout = ['/terms', '/privacy'];
   const pagesWithOwnLayout = ['/', '/goodbye', '/welcome', '/login'];
   
   const isPublicPageWithLayout = publicPagesWithLayout.includes(pathname);
@@ -45,7 +45,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
         <Header />
         <BackgroundWrapper>
           <div className="min-h-screen flex flex-col pt-4">
-            <main className="flex-grow container max-w-7xl px-4 sm:px-6 lg:px-8 pb-8 mx-auto">
+            <main className="grow container max-w-7xl px-4 sm:px-6 lg:px-8 pb-8 mx-auto">
               {children}
             </main>
             <Footer />

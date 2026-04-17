@@ -35,14 +35,14 @@ describe('revalidateUserTag', () => {
   it('should call revalidateTag with correct format', () => {
     revalidateUserTag('user123', CacheTag.TRANSACTIONS);
     
-    expect(revalidateTag).toHaveBeenCalledWith('transactions_user123');
+    expect(revalidateTag).toHaveBeenCalledWith('transactions_user123', 'max');
     expect(revalidateTag).toHaveBeenCalledTimes(1);
   });
 
   it('should work with different tags', () => {
     revalidateUserTag('user456', CacheTag.CATEGORIES);
     
-    expect(revalidateTag).toHaveBeenCalledWith('categories_user456');
+    expect(revalidateTag).toHaveBeenCalledWith('categories_user456', 'max');
   });
 
   it('should work with all cache tags', () => {
@@ -71,8 +71,8 @@ describe('revalidateUserTags', () => {
     revalidateUserTags('user123', tags);
     
     expect(revalidateTag).toHaveBeenCalledTimes(2);
-    expect(revalidateTag).toHaveBeenCalledWith('transactions_user123');
-    expect(revalidateTag).toHaveBeenCalledWith('taxes_user123');
+    expect(revalidateTag).toHaveBeenCalledWith('transactions_user123', 'max');
+    expect(revalidateTag).toHaveBeenCalledWith('taxes_user123', 'max');
   });
 
   it('should handle empty array', () => {
@@ -85,7 +85,7 @@ describe('revalidateUserTags', () => {
     revalidateUserTags('user123', [CacheTag.SAVINGS_FUNDS]);
     
     expect(revalidateTag).toHaveBeenCalledTimes(1);
-    expect(revalidateTag).toHaveBeenCalledWith('savingsFunds_user123');
+    expect(revalidateTag).toHaveBeenCalledWith('savingsFunds_user123', 'max');
   });
 
   it('should handle multiple tags in correct order', () => {
@@ -97,10 +97,10 @@ describe('revalidateUserTags', () => {
     ];
     revalidateUserTags('user123', tags);
     
-    expect(revalidateTag).toHaveBeenNthCalledWith(1, 'transactions_user123');
-    expect(revalidateTag).toHaveBeenNthCalledWith(2, 'taxes_user123');
-    expect(revalidateTag).toHaveBeenNthCalledWith(3, 'savingsFunds_user123');
-    expect(revalidateTag).toHaveBeenNthCalledWith(4, 'cardSummaries_user123');
+    expect(revalidateTag).toHaveBeenNthCalledWith(1, 'transactions_user123', 'max');
+    expect(revalidateTag).toHaveBeenNthCalledWith(2, 'taxes_user123', 'max');
+    expect(revalidateTag).toHaveBeenNthCalledWith(3, 'savingsFunds_user123', 'max');
+    expect(revalidateTag).toHaveBeenNthCalledWith(4, 'cardSummaries_user123', 'max');
   });
 });
 
@@ -140,9 +140,9 @@ describe('TagGroups', () => {
     revalidateUserTags('user123', TagGroups.TRANSACTION_MUTATION);
     
     expect(revalidateTag).toHaveBeenCalledTimes(4);
-    expect(revalidateTag).toHaveBeenCalledWith('transactions_user123');
-    expect(revalidateTag).toHaveBeenCalledWith('taxes_user123');
-    expect(revalidateTag).toHaveBeenCalledWith('savingsFunds_user123');
-    expect(revalidateTag).toHaveBeenCalledWith('cardSummaries_user123');
+    expect(revalidateTag).toHaveBeenCalledWith('transactions_user123', 'max');
+    expect(revalidateTag).toHaveBeenCalledWith('taxes_user123', 'max');
+    expect(revalidateTag).toHaveBeenCalledWith('savingsFunds_user123', 'max');
+    expect(revalidateTag).toHaveBeenCalledWith('cardSummaries_user123', 'max');
   });
 });

@@ -31,10 +31,10 @@ interface PaymentMethodFormProps {
 
 const getFormSchema = (translations: Translations) => z.object({
   name: z.string().min(1, { message: translations.paymentMethodNameRequired }),
-  type: z.enum(PAYMENT_METHOD_TYPES, { required_error: translations.paymentMethodTypeRequired }),
+  type: z.enum(PAYMENT_METHOD_TYPES, { message: translations.paymentMethodTypeRequired }),
   bank: z.string().optional(),
-  closingDay: z.coerce.number().min(1).max(31).optional(),
-  isEnabled: z.boolean().default(true),
+  closingDay: z.number().min(1).max(31).optional(),
+  isEnabled: z.boolean(),
 });
 
 export function PaymentMethodForm({ onSubmit, onClose, initialData }: PaymentMethodFormProps) {
@@ -129,7 +129,15 @@ export function PaymentMethodForm({ onSubmit, onClose, initialData }: PaymentMet
                     <FormItem>
                         <FormLabel>{translations.cardClosingDay}</FormLabel>
                         <FormControl>
-                            <Input type="number" min="1" max="31" placeholder="Ej: 25" {...field} value={field.value ?? ''} />
+                            <Input 
+                                type="number" 
+                                min="1" 
+                                max="31" 
+                                placeholder="Ej: 25" 
+                                {...field} 
+                                value={field.value ?? ''} 
+                                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                            />
                         </FormControl>
                         <FormDescription>
                             {translations.cardClosingDayDesc}

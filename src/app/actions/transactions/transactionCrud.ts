@@ -1,11 +1,11 @@
 'use server';
 
-import { ObjectId } from 'mongodb';
-import { getDb, mapMongoDocument, mapMongoDocumentPaymentMethod } from '@/lib/actions-helpers';
+import { ObjectId, type Filter, type Document } from 'mongodb';
+import { getDb, mapMongoDocument, mapMongoDocumentPaymentMethod, insertAndReturn } from '@/lib/actions-helpers';
 import { validateUserId, validateUserAndId } from '@/lib/validation-helpers';
 import { handleActionError } from '@/lib/error-helpers';
 import { getAuthenticatedUser } from '@/lib/auth-server';
-import { revalidateUserTags, TagGroups } from '@/lib/cache-helpers';
+import { revalidateUserTags, TagGroups, CacheTag } from '@/lib/cache-helpers';
 import { formatInstallmentDescription } from '@/lib/installment-helpers';
 import type { Transaction, TransactionFormValues, BillingCycle } from '@/types';
 import { addMonths, endOfMonth } from 'date-fns';
@@ -27,7 +27,7 @@ export async function getInternalTransactions(userId: string, options: GetTransa
   try {
     const { transactionsCollection } = await getDb();
 
-    const query: any = { userId };
+    const query: Filter<Document> = { userId };
 
     if (options.cycle && options.cycle.id !== 'all') {
       const cycleEndDate = options.cycle.endDate
@@ -116,23 +116,26 @@ export async function addInternalTransaction(data: TransactionFormValues, userId
         });
       }
       await transactionsCollection.insertMany(transactionsToInsert);
+      revalidateUserTags(userId, TagGroups.TRANSACTION_MUTATION);
+
+      const firstTransaction = await transactionsCollection.findOne({
+        userId,
+        description: formatInstallmentDescription(transactionData.description, 1, installments)
+      }, { sort: { date: 1 } });
+
+      if (!firstTransaction) {
+        throw new Error('Could not find the newly created transaction.');
+      }
+      return mapMongoDocument(firstTransaction);
     } else {
-      await transactionsCollection.insertOne(baseTransaction);
+      return await insertAndReturn(
+        transactionsCollection,
+        baseTransaction,
+        mapMongoDocument,
+        userId,
+        TagGroups.TRANSACTION_MUTATION as unknown as CacheTag[]
+      );
     }
-
-    revalidateUserTags(userId, TagGroups.TRANSACTION_MUTATION);
-
-    const firstTransaction = await transactionsCollection.findOne({
-      userId,
-      description: installments && installments > 1
-        ? formatInstallmentDescription(transactionData.description, 1, installments)
-        : transactionData.description
-    }, { sort: { date: 1 } });
-
-    if (!firstTransaction) {
-      throw new Error('Could not find the newly created transaction.');
-    }
-    return mapMongoDocument(firstTransaction);
 
   } catch (error) {
     return handleActionError(error, 'add transaction');

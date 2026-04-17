@@ -1,19 +1,16 @@
-
 "use client";
 
 import type { ReactNode } from "react";
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, type User as FirebaseUser, type AuthError } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslations } from "./LanguageContext";
-import { syncUser } from "@/app/actions/authActions";
-import { createSession, deleteSession } from "@/app/actions/sessionActions";
+import { SessionProvider, signIn, signOut as nextAuthSignOut, useSession } from "next-auth/react";
+import { getDbUserAction } from "@/app/actions/userActions";
 import type { User } from "@/types";
 
 interface AuthContextType {
-  user: FirebaseUser | null;
+  user: { name?: string | null; email?: string | null; image?: string | null; id?: string } | null;
   dbUser: User | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
@@ -22,93 +19,73 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-import { useAuthState } from "@/hooks/useAuthState";
-
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { user, loading: firebaseLoading, setUser } = useAuthState();
+function AuthProviderInner({ children }: { children: ReactNode }) {
+  const { data: session, status } = useSession();
   const [dbUser, setDbUser] = useState<User | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
-  const router = useRouter();
   const { toast } = useToast();
   const { translations } = useTranslations();
-
-  const handleAuthError = (error: AuthError) => {
-    if (error.code === 'auth/unauthorized-domain') {
-      toast({
-        title: translations.errorTitle,
-        description: translations.unauthorizedDomainError,
-        variant: "destructive",
-        duration: 15000,
-      });
-    } else if (error.code !== 'auth/cancelled-popup-request' && error.code !== 'auth/popup-closed-by-user') {
-      console.error("Error during sign in", error);
-      toast({ title: translations.errorTitle, description: error.message, variant: "destructive" });
-    }
-  };
-
+  
+  const loading = status === "loading" || isSyncing;
 
   useEffect(() => {
-    const performSync = async () => {
-      if (user) {
+    const fetchDbUser = async () => {
+      if (session?.user) {
         setIsSyncing(true);
         try {
-          const token = await user.getIdToken();
-
-          // Create session cookie for server actions
-          await createSession(token);
-
-          const result = await syncUser(token);
-          if (result.success && result.user) {
-            setDbUser(result.user);
+          const dbResult = await getDbUserAction();
+          if (dbResult.success && dbResult.user) {
+            setDbUser(dbResult.user);
           } else {
-            console.error("Failed to sync user:", result.error);
-            toast({
-              title: translations.errorTitle,
-              description: `Sync failed: ${result.error}`,
-              variant: "destructive"
-            });
+            console.error("No database user mapped.");
+            setDbUser(null);
           }
         } catch (err) {
           console.error("Sync user error:", err);
         } finally {
           setIsSyncing(false);
         }
-      } else {
+      } else if (status === "unauthenticated") {
         setDbUser(null);
       }
     };
 
-    performSync();
-  }, [user]);
+    fetchDbUser();
+  }, [session, status]);
 
   const signInWithGoogle = useCallback(async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      setUser(result.user);
-      // The useEffect will handle syncing
-    } catch (error) {
-      handleAuthError(error as AuthError);
+      await signIn("google");
+    } catch (error: any) {
+      toast({ title: translations.errorTitle, description: error.message || "Login failed", variant: "destructive" });
     }
-  }, [setUser, toast, translations]);
+  }, [toast, translations]);
 
-  const signOut = useCallback(async (redirectPath: string = '/', options: { noRedirect?: boolean } = {}) => {
+  const customSignOut = useCallback(async (redirectPath: string = '/', options: { noRedirect?: boolean } = {}) => {
     try {
-      await firebaseSignOut(auth);
-      await deleteSession();
-      setUser(null);
       setDbUser(null);
-      if (!options.noRedirect) {
-        router.push(redirectPath);
+      if (options.noRedirect) {
+        await nextAuthSignOut({ redirect: false, callbackUrl: redirectPath });
+      } else {
+        await nextAuthSignOut({ redirect: true, callbackUrl: redirectPath });
       }
     } catch (error) {
       console.error("Error signing out", error);
     }
-  }, [setUser, router]);
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, dbUser, loading: firebaseLoading || isSyncing, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user: session?.user as any || null, dbUser, loading, signInWithGoogle, signOut: customSignOut }}>
       {children}
     </AuthContext.Provider>
+  );
+}
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  return (
+    <SessionProvider>
+      <AuthProviderInner>{children}</AuthProviderInner>
+    </SessionProvider>
   );
 };
 
@@ -119,4 +96,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-

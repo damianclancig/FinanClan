@@ -14,7 +14,7 @@ const protectedRoutes = [
     '/card-summaries'
 ];
 
-const unmanagedRoutes = ['/', '/login', '/goodbye', '/welcome', '/terms'];
+const unmanagedRoutes = ['/', '/login', '/goodbye', '/welcome', '/terms', '/privacy'];
 
 export const useProtectedRoute = () => {
   const { user, loading } = useAuth();

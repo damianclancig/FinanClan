@@ -29,7 +29,7 @@ interface CloseFundDialogProps {
 }
 
 const getFormSchema = (translations: Translations) => z.object({
-  paymentMethodId: z.string({ required_error: translations.paymentMethodRequired }),
+  paymentMethodId: z.string({ message: translations.paymentMethodRequired }),
 });
 
 export function CloseFundDialog({

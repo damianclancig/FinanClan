@@ -13,13 +13,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Rocket, Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { subDays, format } from "date-fns";
-import { es, pt, enUS } from "date-fns/locale";
+import { format } from "date-fns";
+import { getDateLocale } from "@/lib/utils";
 import { BackgroundWrapper } from "@/components/layout/BackgroundWrapper";
 import { Footer } from "@/components/layout/Footer";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function WelcomePage() {
     const { user, dbUser } = useAuth();
@@ -28,9 +29,9 @@ export default function WelcomePage() {
     const { translations, language } = useTranslations();
     const [isStartingNewCycle, setIsStartingNewCycle] = useState(false);
     const [newCycleStartDate, setNewCycleStartDate] = useState<Date | undefined>(new Date());
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
-    const locales = { en: enUS, es, pt };
-    const currentLocale = locales[language] || enUS;
+    const currentLocale = getDateLocale(language);
 
     const handleStartNewCycle = async () => {
         if (!dbUser || !newCycleStartDate) {
@@ -43,7 +44,7 @@ export default function WelcomePage() {
         const localDate = new Date(newCycleStartDate);
         localDate.setHours(0, 0, 0, 0);
 
-        const result = await startNewCycle(localDate);
+        const result = await startNewCycle(localDate, translations);
         if ('error' in result) {
             toast({ title: translations.errorTitle, description: result.error, variant: "destructive" });
             setIsStartingNewCycle(false);
@@ -63,18 +64,21 @@ export default function WelcomePage() {
                     </div>
                 </header>
 
-                <main className="flex-grow flex items-center justify-center p-4">
+                <main className="grow flex items-center justify-center p-4">
                     <Card className="w-full max-w-2xl shadow-2xl border-2 border-primary/50 bg-card/80 backdrop-blur-sm">
                         <CardHeader className="text-center p-8">
                             <CardTitle className="text-3xl">{translations.welcomeTitle}</CardTitle>
-                            <h1 className="text-6xl font-extrabold -mt-2">
-                                <span style={{ background: 'linear-gradient(135deg, #1E3A8A, #3B82F6)', WebkitBackgroundClip: 'text', color: 'transparent', textShadow: '0 2px 4px rgba(30, 58, 138, 0.4)', WebkitTextStroke: '1px rgba(0,0,0,0.1)' }}>
-                                    Finan
-                                </span>
-                                <span style={{ background: 'linear-gradient(135deg, #FBBF24, #FDE68A, #F59E0B)', WebkitBackgroundClip: 'text', color: 'transparent', textShadow: '0 2px 3px rgba(245, 158, 11, 0.5)', WebkitTextStroke: '1px rgba(245, 158, 11, 0.4)' }}>
-                                    Clan
-                                </span>
-                            </h1>
+                            <div className="flex justify-center -mt-2 mb-2">
+                                <Image 
+                                    src="/logo-full.webp" 
+                                    alt="FinanClan" 
+                                    width={300} 
+                                    height={80} 
+                                    priority
+                                    className="w-auto h-16 sm:h-20 object-contain"
+                                    style={{ height: 'auto' }}
+                                />
+                            </div>
                             <CardDescription className="text-base pt-2 text-foreground/80">
                                 {translations.welcomeSubtitle}
                             </CardDescription>
@@ -86,25 +90,30 @@ export default function WelcomePage() {
                             <div className="space-y-2">
                                 <p className="font-semibold text-center">{translations.selectStartDate}</p>
                                 <div className="flex justify-center">
-                                    <Popover>
+                                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                                         <PopoverTrigger asChild>
                                             <Button
                                                 variant={"outline"}
                                                 className={cn(
-                                                    "w-auto justify-center text-left font-normal text-lg h-12",
+                                                    "w-[280px] justify-start text-left font-normal",
                                                     !newCycleStartDate && "text-muted-foreground"
                                                 )}
                                             >
-                                                <CalendarIcon className="mr-2 h-5 w-5" />
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
                                                 {newCycleStartDate ? format(newCycleStartDate, "PPP", { locale: currentLocale }) : <span>{translations.date}</span>}
                                             </Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0">
+                                        <PopoverContent className="w-auto p-0" align="center">
                                             <Calendar
                                                 mode="single"
+                                                locale={currentLocale}
+                                                weekStartsOn={0}
                                                 selected={newCycleStartDate}
-                                                onSelect={setNewCycleStartDate}
-                                                disabled={(date) => date > new Date() || date < subDays(new Date(), 30)}
+                                                onSelect={(date) => {
+                                                    setNewCycleStartDate(date);
+                                                    setIsCalendarOpen(false);
+                                                }}
+                                                disabled={(date) => date > new Date()}
                                                 initialFocus
                                             />
                                         </PopoverContent>

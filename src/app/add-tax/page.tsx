@@ -6,7 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { addTax, getUniqueTaxNames } from "@/app/actions/taxActions";
 import { isErrorResponse } from "@/lib/error-types";
-import { TaxForm, type TaxFormSubmitValues } from "@/components/taxes/TaxForm";
+import { TaxForm } from "@/components/taxes/TaxForm";
+import { TaxFormSchemaType } from "@/components/taxes/form/TaxFormSchema";
 import { FormPageLayout } from "@/components/layout/FormPageLayout";
 import { EditPageLoader } from "@/components/common/EditPageLoader";
 import { useTranslations } from "@/contexts/LanguageContext";
@@ -25,7 +26,7 @@ export default function AddTaxPage() {
     const month = searchParams.get('month');
     const year = searchParams.get('year');
 
-    const data: Partial<TaxFormSubmitValues> = {};
+    const data: Partial<TaxFormSchemaType> = {};
     if (name) data.name = name;
     if (month) data.month = parseInt(month, 10);
     if (year) data.year = parseInt(year, 10);
@@ -49,7 +50,7 @@ export default function AddTaxPage() {
       .finally(() => setIsLoading(false));
   }, [dbUser, initialData]);
 
-  const handleFormSubmit = async (values: TaxFormSubmitValues) => {
+  const handleFormSubmit = async (values: TaxFormSchemaType) => {
     if (!dbUser) {
       toast({ title: translations.errorTitle, description: "You must be logged in to perform this action.", variant: "destructive" });
       return;

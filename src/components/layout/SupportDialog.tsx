@@ -12,8 +12,26 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Heart, Github, Briefcase, ClipboardCopy, Check } from "lucide-react";
+import { Heart, Briefcase, ClipboardCopy, Check } from "lucide-react";
 import { useTranslations } from "@/contexts/LanguageContext";
+
+const GithubIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+    <path d="M9 18c-4.51 2-5-2-7-2" />
+  </svg>
+);
 
 const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" {...props}>
@@ -32,8 +50,9 @@ export function SupportDialog() {
   const PORTFOLIO_URL = process.env.NEXT_PUBLIC_PORTFOLIO_URL;
   const GITHUB_REPO_URL = process.env.NEXT_PUBLIC_GITHUB_REPO_URL;
   const PAYPAL_URL = process.env.NEXT_PUBLIC_PAYPAL_URL;
+  const MERCADOPAGO_URL = process.env.NEXT_PUBLIC_MERCADOPAGO_URL;
 
-  if (!CAFECITO_USER || !PORTFOLIO_URL || !GITHUB_REPO_URL || !PAYPAL_URL) {
+  if (!CAFECITO_USER || !PORTFOLIO_URL || !GITHUB_REPO_URL || !PAYPAL_URL || !MERCADOPAGO_URL) {
     console.warn("Support Dialog: One or more environment variables for support links are not set.");
   }
 
@@ -83,6 +102,23 @@ export function SupportDialog() {
               </div>
             </a>
           </Button>
+          {MERCADOPAGO_URL && (
+            <Button asChild className="w-full text-base bg-[#009EE3] hover:bg-[#0087c1] h-[56px] py-0 px-2" size="lg">
+              <a href={MERCADOPAGO_URL} target="_blank" rel="noopener noreferrer">
+                <div className="flex items-center justify-center w-full">
+                  <div className="w-24 sm:w-28 -ml-4 sm:-ml-5 mr-1 flex justify-center">
+                    <img 
+                      src="/mp.svg" 
+                      alt="Mercado Pago" 
+                      className="w-full h-auto min-w-[96px] sm:min-w-[132px]" 
+                      style={{ height: "auto" }}
+                    />
+                  </div>
+                  <span className="text-left">{translations.supportMercadoPago}</span>
+                </div>
+              </a>
+            </Button>
+          )}
            {PAYPAL_URL && (
             <Button asChild className="w-full text-base bg-[#003087] hover:bg-[#00205b] h-auto py-2 sm:py-3" size="lg">
               <a href={PAYPAL_URL} target="_blank" rel="noopener noreferrer">
@@ -109,7 +145,7 @@ export function SupportDialog() {
             <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
               <div className="flex items-center justify-center w-full">
                 <div className="w-10 mr-2 flex justify-center">
-                  <Github className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <GithubIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
                 <span className="text-left">{translations.supportGithub}</span>
               </div>

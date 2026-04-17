@@ -36,12 +36,12 @@ interface PayCardSummaryDialogProps {
 }
 
 const getFormSchema = (translations: Translations, maxAmount: number) => z.object({
-    amount: z.coerce
-        .number({ required_error: translations.amountRequired })
+    amount: z
+        .number({ message: translations.amountRequired })
         .positive({ message: translations.amountPositive })
         .max(maxAmount, { message: `${translations.amountToPay} ${formatCurrency(maxAmount)}` }),
-    paymentMethodId: z.string({ required_error: translations.paymentMethodRequired }),
-    date: z.date({ required_error: translations.dateRequired }),
+    paymentMethodId: z.string({ message: translations.paymentMethodRequired }),
+    date: z.date({ message: translations.dateRequired }),
 });
 
 

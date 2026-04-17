@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/card";
@@ -34,12 +35,12 @@ export default function HomePage() {
   }
 
   const features = [
-    "Control total de tus ingresos y gastos.",
-    "Categorías y métodos de pago 100% personalizables.",
-    "Gestión y proyección anual de tus compras en cuotas.",
-    "Registro y seguimiento de impuestos recurrentes.",
-    "Gráficos interactivos para visualizar tu salud financiera.",
-    "Seguridad y privacidad para tus datos.",
+    translations.landingFeature1,
+    translations.landingFeature2,
+    translations.landingFeature3,
+    translations.landingFeature4,
+    translations.landingFeature5,
+    translations.landingFeature6,
   ];
 
   return (
@@ -51,43 +52,30 @@ export default function HomePage() {
                   <LanguageSwitcher />
               </div>
           </header>
-          <main className="flex-grow flex items-center justify-center p-4 text-center">
+          <main className="grow flex items-center justify-center p-4 text-center">
             <div className="flex flex-col items-center">
                 <div className="w-full max-w-2xl mb-8">
-                    <h1 className="text-7xl md:text-8xl font-extrabold">
-                    <span
-                      style={{
-                        background: 'linear-gradient(135deg, #1E3A8A, #3B82F6)',
-                        WebkitBackgroundClip: 'text',
-                        color: 'transparent',
-                        textShadow: '0 2px 4px rgba(30, 58, 138, 0.4)',
-                        WebkitTextStroke: '1px rgba(0,0,0,0.1)',
-                      }}
-                    >
-                        Finan
-                    </span>
-                    <span
-                      style={{
-                        background: 'linear-gradient(135deg, #FBBF24, #FDE68A, #F59E0B)',
-                        WebkitBackgroundClip: 'text',
-                        color: 'transparent',
-                        textShadow: '0 2px 3px rgba(245, 158, 11, 0.5)',
-                        WebkitTextStroke: '1px rgba(245, 158, 11, 0.4)',
-                      }}
-                    >
-                        Clan
-                    </span>
-                    </h1>
+                    <div className="flex justify-center mb-6">
+                      <Image 
+                        src="/logo-big.webp" 
+                        alt="FinanClan" 
+                        width={400} 
+                        height={120} 
+                        priority
+                        className="w-auto h-24 md:h-32 object-contain"
+                        style={{ height: 'auto' }}
+                      />
+                    </div>
                     <p className="mt-4 text-xl md:text-2xl text-foreground font-semibold">
-                    La claridad financiera que tu vida necesita.
+                      {translations.landingHeroTagline}
                     </p>
                 </div>
 
                 <Card className="w-full max-w-lg border-2 border-primary/50 shadow-2xl rounded-2xl bg-card/80 backdrop-blur-sm">
                   <CardHeader>
-                    <h2 className="text-2xl font-bold text-foreground">Toma el control de tu dinero</h2>
+                    <h2 className="text-2xl font-bold text-foreground">{translations.landingCardTitle}</h2>
                     <CardDescription className="text-base text-muted-foreground pt-1">
-                      FinanClan es la herramienta definitiva para organizar tus finanzas personales o familiares de forma simple, visual y segura.
+                      {translations.landingCardDesc}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4 text-left">
@@ -101,7 +89,7 @@ export default function HomePage() {
                       </ul>
                     <Separator className="my-4" />
                     <p className="text-center text-muted-foreground text-base">
-                      ¿Listo para empezar?
+                      {translations.landingCtaPrompt}
                     </p>
                     <Button
                       onClick={signInWithGoogle}

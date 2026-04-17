@@ -61,7 +61,7 @@ export default function AccountSettingsPage() {
         <CardContent>
           <div className="space-y-4">
             <div>
-              <p className="font-semibold text-lg">{user?.displayName}</p>
+              <p className="font-semibold text-lg">{user?.name}</p>
               <p className="text-sm text-muted-foreground">{user?.email}</p>
             </div>
           </div>

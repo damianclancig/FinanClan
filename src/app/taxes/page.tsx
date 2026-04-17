@@ -24,6 +24,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { formatCurrency } from "@/lib/utils";
+import { STORAGE_KEYS } from "@/lib/constants";
 import { IntroAccordion } from "@/components/common/IntroAccordion";
 
 
@@ -218,7 +219,7 @@ export default function TaxesPage() {
         <div className="space-y-4">
           {aggregatedTaxes.map(({ latestRecord, history }) => (
             <Card key={latestRecord.id} className="shadow-lg border-2 border-primary/20 overflow-hidden flex flex-col">
-              <CardContent className="p-4 flex-grow space-y-3">
+              <CardContent className="p-4 grow space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <span className="font-medium text-base">{latestRecord.name}</span>
@@ -243,22 +244,22 @@ export default function TaxesPage() {
                       <span className="font-semibold text-base">{translations.paid}</span>
                     </div>
                     <Separator orientation="vertical" className="h-full" />
-                    <Button variant="ghost" className="flex-shrink-0 rounded-none px-4" onClick={() => handleAddNewPeriodClick(latestRecord)}>
+                    <Button variant="ghost" className="shrink-0 rounded-none px-4" onClick={() => handleAddNewPeriodClick(latestRecord)}>
                       <CalendarPlus className="h-5 w-5" />
                     </Button>
                   </>
                 ) : (
                   <>
-                    <Button variant="ghost" className="flex-grow justify-center rounded-none text-base" onClick={() => handlePayClick(latestRecord)}>
+                    <Button variant="ghost" className="grow justify-center rounded-none text-base" onClick={() => handlePayClick(latestRecord)}>
                       <DollarSign className="mr-2 h-6 w-6 text-red-500" />
                       {translations.pay}
                     </Button>
                     <Separator orientation="vertical" className="h-full" />
-                    <Button variant="ghost" className="flex-shrink-0 rounded-none px-4" onClick={() => handleAddNewPeriodClick(latestRecord)}>
+                    <Button variant="ghost" className="shrink-0 rounded-none px-4" onClick={() => handleAddNewPeriodClick(latestRecord)}>
                       <CalendarPlus className="h-5 w-5" />
                     </Button>
                     <Separator orientation="vertical" className="h-full" />
-                    <Button variant="ghost" className="flex-shrink-0 rounded-none px-4" onClick={() => handleEditClick(latestRecord.id)}>
+                    <Button variant="ghost" className="shrink-0 rounded-none px-4" onClick={() => handleEditClick(latestRecord.id)}>
                       <Edit className="h-5 w-5" />
                     </Button>
                   </>
@@ -360,7 +361,7 @@ export default function TaxesPage() {
         <IntroAccordion
           titleKey="taxesIntroTitle"
           contentKeys={["taxesIntroText1", "taxesIntroText2", "taxesIntroText3"]}
-          storageKey="taxesIntroVisible"
+          storageKey={STORAGE_KEYS.INTRO_TAXES}
         />
 
         {renderContent()}

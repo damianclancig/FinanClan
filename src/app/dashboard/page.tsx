@@ -132,7 +132,7 @@ export default function DashboardPage() {
 
       // Update selected cycle state based on what we loaded
       if (cycleId) {
-        const loadedCycle = data.billingCycles.find(c => c.id === cycleId) ||
+        const loadedCycle = data.billingCycles.find((c: any) => c.id === cycleId) ||
           (cycleId === ALL_CYCLES_ID ? { id: ALL_CYCLES_ID, userId: dbUser.id, startDate: new Date(0).toISOString() } : null) ||
           data.currentCycle;
         setSelectedCycle(loadedCycle);
@@ -189,7 +189,7 @@ export default function DashboardPage() {
 
   const handleStartNewCycle = async (startDate: Date) => {
     if (!dbUser) return;
-    const result = await startNewCycle(startDate);
+    const result = await startNewCycle(startDate, translations);
     if ('error' in result) {
       toast({ title: translations.errorTitle, description: result.error, variant: "destructive" });
     } else {

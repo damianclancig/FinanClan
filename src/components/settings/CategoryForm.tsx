@@ -37,7 +37,7 @@ interface CategoryFormProps {
 const getFormSchema = (translations: Translations) => z.object({
   name: z.string().min(1, { message: translations.categoryNameRequired }),
   icon: z.string().optional(),
-  isEnabled: z.boolean().default(true),
+  isEnabled: z.boolean(),
 });
 
 export function CategoryForm({ 

@@ -9,6 +9,7 @@ import { MONTHS } from "@/types";
 import enTranslations from "@/locales/en.json";
 import esTranslations from "@/locales/es.json";
 import ptTranslations from "@/locales/pt.json";
+import { STORAGE_KEYS } from "@/lib/constants";
 
 interface LanguageContextType {
   language: Language;
@@ -32,7 +33,7 @@ const getInitialLanguage = (): Language => {
     if (typeof window === 'undefined') {
         return 'en'; // Default language for server-side rendering
     }
-    const storedLanguage = localStorage.getItem("ledgerLiteLanguage") as Language | null;
+    const storedLanguage = localStorage.getItem(STORAGE_KEYS.LANGUAGE) as Language | null;
     if (storedLanguage && availableTranslations[storedLanguage]) {
         return storedLanguage;
     }
@@ -50,7 +51,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     const setLanguage = (lang: Language) => {
         if (availableTranslations[lang]) {
             setLanguageState(lang);
-            localStorage.setItem("ledgerLiteLanguage", lang);
+            localStorage.setItem(STORAGE_KEYS.LANGUAGE, lang);
         }
     };
     

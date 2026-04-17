@@ -14,9 +14,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreditCard, Banknote, Calendar, Info, DollarSign, Wallet, History } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, getDateLocale } from "@/lib/utils";
+import { STORAGE_KEYS } from "@/lib/constants";
 import { format } from "date-fns";
-import { es, pt, enUS } from 'date-fns/locale';
 import { IntroAccordion } from "@/components/common/IntroAccordion";
 import { PayCardSummaryDialog } from "./_components/PayCardSummaryDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -33,8 +33,7 @@ export default function CardSummariesPage() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedSummary, setSelectedSummary] = useState<CardSummary | null>(null);
 
-    const locales = { en: enUS, es, pt };
-    const currentLocale = locales[language] || enUS;
+    const currentLocale = getDateLocale(language);
 
     const loadData = async () => {
         if (!dbUser) return;
@@ -121,7 +120,7 @@ export default function CardSummariesPage() {
             <IntroAccordion
                 titleKey="cardSummariesIntroTitle"
                 contentKeys={["cardSummariesIntroText1", "cardSummariesIntroText2", "cardSummariesIntroText3"]}
-                storageKey="cardSummariesIntroVisible"
+                storageKey={STORAGE_KEYS.INTRO_CARDS}
             />
 
             {summaries.length === 0 ? (

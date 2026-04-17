@@ -1,7 +1,7 @@
 'use server';
 
-import { ObjectId } from 'mongodb';
-import { getDb, mapMongoDocumentCategory } from '@/lib/actions-helpers';
+import { ObjectId, type Collection, type Document } from 'mongodb';
+import { getDb, mapMongoDocumentCategory, insertAndReturn } from '@/lib/actions-helpers';
 import { isCategoryInUse as checkCategoryInUse } from '@/lib/database-helpers';
 import { validateObjectId } from '@/lib/validation-helpers';
 import { handleActionError } from '@/lib/error-helpers';
@@ -23,6 +23,59 @@ async function seedDefaultCategories(userId: string) {
   await categoriesCollection.insertMany(defaultCategories);
 }
 
+async function runCategoryMigrations(userId: string, categoriesCollection: Collection<Document>) {
+  // One-time migration logic for existing users
+  const systemCategoryKeys = CATEGORIES.filter(c => c.isSystem).map(c => c.key);
+  const systemCategoriesInDb = await categoriesCollection.find({ userId, isSystem: true }).toArray();
+
+  // Demote categories that are no longer system categories
+  for (const dbCat of systemCategoriesInDb) {
+    if (!systemCategoryKeys.includes(dbCat.name)) {
+      await categoriesCollection.updateOne({ _id: dbCat._id }, { $set: { isSystem: false } });
+    }
+  }
+
+  // Promote or create system categories
+  for (const sysCatKey of systemCategoryKeys) {
+    const sysCatDef = CATEGORIES.find(c => c.key === sysCatKey)!;
+    const existingCategory = await categoriesCollection.findOne({ userId, name: sysCatKey });
+
+    if (existingCategory) {
+      if (existingCategory.isSystem !== true) {
+        await categoriesCollection.updateOne(
+          { _id: existingCategory._id },
+          { $set: { isSystem: true } }
+        );
+      }
+    } else {
+      await categoriesCollection.insertOne({
+        name: sysCatDef.key,
+        userId,
+        isEnabled: true,
+        isSystem: true,
+        icon: DEFAULT_CATEGORY_ICONS[sysCatDef.key], // Assign default icon
+      });
+    }
+  }
+
+  // Migrate existing system categories to have default icons if they don't have one
+  for (const sysCatKey of systemCategoryKeys) {
+    const defaultIcon = DEFAULT_CATEGORY_ICONS[sysCatKey];
+    if (defaultIcon) {
+      await categoriesCollection.updateOne(
+        { userId, name: sysCatKey, icon: { $exists: false } },
+        { $set: { icon: defaultIcon } }
+      );
+    }
+  }
+
+  // Ensure all other non-system categories have isSystem: false
+  await categoriesCollection.updateMany(
+    { userId, name: { $nin: systemCategoryKeys }, isSystem: { $ne: false } },
+    { $set: { isSystem: false } }
+  );
+}
+
 
 export async function getCategories(): Promise<Category[]> {
   const { id } = await getAuthenticatedUser();
@@ -38,56 +91,7 @@ export async function getInternalCategories(userId: string): Promise<Category[]>
     if (userCategoriesCount === 0) {
       await seedDefaultCategories(userId);
     } else {
-      // One-time migration logic for existing users
-      const systemCategoryKeys = CATEGORIES.filter(c => c.isSystem).map(c => c.key);
-      const systemCategoriesInDb = await categoriesCollection.find({ userId, isSystem: true }).toArray();
-
-      // Demote categories that are no longer system categories
-      for (const dbCat of systemCategoriesInDb) {
-        if (!systemCategoryKeys.includes(dbCat.name)) {
-          await categoriesCollection.updateOne({ _id: dbCat._id }, { $set: { isSystem: false } });
-        }
-      }
-
-      // Promote or create system categories
-      for (const sysCatKey of systemCategoryKeys) {
-        const sysCatDef = CATEGORIES.find(c => c.key === sysCatKey)!;
-        const existingCategory = await categoriesCollection.findOne({ userId, name: sysCatKey });
-
-        if (existingCategory) {
-          if (existingCategory.isSystem !== true) {
-            await categoriesCollection.updateOne(
-              { _id: existingCategory._id },
-              { $set: { isSystem: true } }
-            );
-          }
-        } else {
-          await categoriesCollection.insertOne({
-            name: sysCatDef.key,
-            userId,
-            isEnabled: true,
-            isSystem: true,
-            icon: DEFAULT_CATEGORY_ICONS[sysCatDef.key], // Assign default icon
-          });
-        }
-      }
-
-      // Migrate existing system categories to have default icons if they don't have one
-      for (const sysCatKey of systemCategoryKeys) {
-        const defaultIcon = DEFAULT_CATEGORY_ICONS[sysCatKey];
-        if (defaultIcon) {
-          await categoriesCollection.updateOne(
-            { userId, name: sysCatKey, icon: { $exists: false } },
-            { $set: { icon: defaultIcon } }
-          );
-        }
-      }
-
-      // Ensure all other non-system categories have isSystem: false
-      await categoriesCollection.updateMany(
-        { userId, name: { $nin: systemCategoryKeys }, isSystem: { $ne: false } },
-        { $set: { isSystem: false } }
-      );
+      await runCategoryMigrations(userId, categoriesCollection);
     }
 
     const categories = await categoriesCollection.find({ userId }).sort({ isSystem: -1, name: 1 }).toArray();
@@ -130,22 +134,17 @@ export async function addCategory(data: CategoryFormValues, translations: Transl
 
     // Validate icon if provided
     if (data.icon && !isValidCategoryIcon(data.icon)) {
-      return { error: 'Invalid icon selected.' };
+      return { error: translations.invalidIconError };
     }
 
     const documentToInsert = { ...data, userId, isSystem: false }; // User-added categories are not system categories
-    const result = await categoriesCollection.insertOne(documentToInsert);
-
-    if (!result.insertedId) {
-      throw new Error('Failed to insert category.');
-    }
-
-    revalidateUserTag(userId, CacheTag.CATEGORIES);
-    const newCategory = await categoriesCollection.findOne({ _id: result.insertedId });
-    if (!newCategory) {
-      throw new Error('Could not find the newly created category.');
-    }
-    return mapMongoDocumentCategory(newCategory);
+    return await insertAndReturn(
+      categoriesCollection,
+      documentToInsert,
+      mapMongoDocumentCategory,
+      userId,
+      CacheTag.CATEGORIES
+    );
   } catch (error) {
     return handleActionError(error, 'add category');
   }
@@ -160,7 +159,7 @@ export async function updateCategory(id: string, data: CategoryFormValues, trans
     // Prevent updating system categories
     const categoryToUpdate = await categoriesCollection.findOne({ _id: new ObjectId(id), userId });
     if (categoryToUpdate?.isSystem) {
-      return { error: 'System categories cannot be modified.' };
+      return { error: translations.systemCategoryTooltip };
     }
 
     // Check for duplicates on name change (case-insensitive)
@@ -178,7 +177,7 @@ export async function updateCategory(id: string, data: CategoryFormValues, trans
 
     // Validate icon if provided
     if (data.icon && !isValidCategoryIcon(data.icon)) {
-      return { error: 'Invalid icon selected.' };
+      return { error: translations.invalidIconError };
     }
 
     const result = await categoriesCollection.updateOne(
@@ -187,7 +186,7 @@ export async function updateCategory(id: string, data: CategoryFormValues, trans
     );
 
     if (result.matchedCount === 0) {
-      return { error: 'Category not found or you do not have permission to edit it.' };
+      return { error: translations.notFoundOrNoPermission };
     }
 
     revalidateUserTag(userId, CacheTag.CATEGORIES);
@@ -223,11 +222,11 @@ export async function deleteCategory(id: string, translations: Translations): Pr
 
     const categoryToDelete = await categoriesCollection.findOne({ _id: new ObjectId(id), userId });
     if (!categoryToDelete) {
-      return { success: false, error: 'Category not found or you do not have permission to delete it.' };
+      return { success: false, error: translations.notFoundOrNoPermission };
     }
 
     if (categoryToDelete.isSystem) {
-      return { success: false, error: 'System categories cannot be deleted.' };
+      return { success: false, error: translations.systemCategoryTooltip };
     }
 
     const inUse = await isCategoryInUse(id);
@@ -238,7 +237,7 @@ export async function deleteCategory(id: string, translations: Translations): Pr
     const result = await categoriesCollection.deleteOne({ _id: new ObjectId(id), userId });
 
     if (result.deletedCount === 0) {
-      return { success: false, error: 'Category not found during deletion.' };
+      return { success: false, error: translations.notFoundOrNoPermission };
     }
 
     revalidateUserTag(userId, CacheTag.CATEGORIES);

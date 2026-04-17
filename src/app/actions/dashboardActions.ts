@@ -169,12 +169,61 @@ const calculateCycleBudgetInsights = (transactions: Transaction[], currentCycle:
     isHistoric,
     cycleDailyAverage,
     cycleWeeklyAverage,
-    previousCycleIncome: 0, // Will be filled in getDashboardData
-    previousCycleExpenses: 0, // Will be filled in getDashboardData
+    previousCycleIncome: 0, 
+    previousCycleExpenses: 0, 
   };
 };
 
-export async function getDashboardData(cycleId: string | null) {
+function resolveActiveCycle(
+  cycleId: string | null | undefined, 
+  currentCycle: BillingCycle | null, 
+  billingCycles: BillingCycle[],
+  userId: string
+): BillingCycle | null {
+  if (!cycleId) return currentCycle;
+  if (cycleId === 'all') {
+    return { id: 'all', userId, startDate: new Date(0).toISOString() };
+  }
+  return billingCycles.find(c => c.id === cycleId) || null;
+}
+
+function getCycleDateRange(activeCycle: BillingCycle | null) {
+  const cycleStartDate = activeCycle ? new Date(activeCycle.startDate) : new Date(0);
+  let cycleEndDate: Date;
+
+  if (activeCycle?.endDate) {
+    cycleEndDate = new Date(activeCycle.endDate);
+  } else if (activeCycle?.id === 'all') {
+    cycleEndDate = new Date();
+  } else {
+    cycleEndDate = endOfMonth(new Date());
+  }
+
+  return { cycleStartDate, cycleEndDate };
+}
+
+async function getPreviousCycleComparison(
+  activeCycle: BillingCycle,
+  billingCycles: BillingCycle[]
+): Promise<{ income: number; expenses: number } | null> {
+  const selectedCycleIndex = billingCycles.findIndex(c => c.id === activeCycle.id);
+  if (selectedCycleIndex > -1 && selectedCycleIndex + 1 < billingCycles.length) {
+    const previousCycle = billingCycles[selectedCycleIndex + 1];
+    const transactionsForPreviousCycle = await getTransactions({ cycle: previousCycle });
+    const prevIncome = transactionsForPreviousCycle
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+    // Exclude credit card purchases from previous cycle expenses
+    const prevExpenses = transactionsForPreviousCycle
+      .filter(t => t.type === 'expense' && t.isCardPayment !== true)
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    return { income: prevIncome, expenses: prevExpenses };
+  }
+  return null;
+}
+
+export async function getDashboardData(cycleId?: string | null) {
   const { id: userId } = await getAuthenticatedUser();
 
   const todayEnd = new Date();
@@ -199,56 +248,29 @@ export async function getDashboardData(cycleId: string | null) {
     getInstallmentProjections(),
   ]);
 
-  // Handle potential errors from getBudgetInsights
   const weeklyInsights = isErrorResponse(weeklyInsightsResult)
     ? { dailyAverage7Days: 0, weeklyExpensesTotal: 0, weeklyAverage28Days: 0, dailyExpenses: [] }
     : weeklyInsightsResult;
 
-  let activeCycle = currentCycle;
-  if (cycleId) {
-    if (cycleId === 'all') {
-      activeCycle = { id: 'all', userId, startDate: new Date(0).toISOString() };
-    } else {
-      activeCycle = billingCycles.find(c => c.id === cycleId) || null;
-    }
-  }
+  const activeCycle = resolveActiveCycle(cycleId, currentCycle, billingCycles, userId);
+  const { cycleStartDate, cycleEndDate } = getCycleDateRange(activeCycle);
 
-  const transactionsForCycle = await getTransactions({ cycle: activeCycle });
+  const [transactionsForCycle, expensesByCategoryResult] = await Promise.all([
+    getTransactions({ cycle: activeCycle }),
+    getExpensesByCategory(cycleStartDate, cycleEndDate)
+  ]);
 
-  const cycleStartDate = activeCycle ? new Date(activeCycle.startDate) : new Date(0);
-  let cycleEndDate;
-  if (activeCycle?.endDate) {
-    cycleEndDate = new Date(activeCycle.endDate);
-  } else if (activeCycle?.id === 'all') {
-    cycleEndDate = new Date();
-  } else {
-    cycleEndDate = endOfMonth(new Date());
-  }
-
-  const expensesByCategoryResult = await getExpensesByCategory(cycleStartDate, cycleEndDate);
-
-  // Handle potential errors from getExpensesByCategory
-  const expensesByCategory = isErrorResponse(expensesByCategoryResult)
-    ? []
-    : expensesByCategoryResult;
+  const expensesByCategory = isErrorResponse(expensesByCategoryResult) ? [] : expensesByCategoryResult;
 
   let budgetInsights = calculateCycleBudgetInsights(transactionsForCycle, activeCycle);
 
   if (activeCycle && activeCycle.id !== 'all') {
-    const selectedCycleIndex = billingCycles.findIndex(c => c.id === activeCycle!.id);
-    if (selectedCycleIndex > -1 && selectedCycleIndex + 1 < billingCycles.length) {
-      const previousCycle = billingCycles[selectedCycleIndex + 1];
-      const transactionsForPreviousCycle = await getTransactions({ cycle: previousCycle });
-      const prevIncome = transactionsForPreviousCycle.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-      // Exclude credit card purchases from previous cycle expenses
-      const prevExpenses = transactionsForPreviousCycle.filter(t => t.type === 'expense' && t.isCardPayment !== true).reduce((sum, t) => sum + t.amount, 0);
-
-      budgetInsights.previousCycleIncome = prevIncome;
-      budgetInsights.previousCycleExpenses = prevExpenses;
+    const prevComparison = await getPreviousCycleComparison(activeCycle, billingCycles);
+    if (prevComparison) {
+      budgetInsights.previousCycleIncome = prevComparison.income;
+      budgetInsights.previousCycleExpenses = prevComparison.expenses;
     }
   }
-
-  const totalCyclesCount = billingCycles.length;
 
   return {
     transactionsForCycle,
@@ -257,7 +279,7 @@ export async function getDashboardData(cycleId: string | null) {
     savingsFunds,
     currentCycle,
     billingCycles,
-    totalCyclesCount,
+    totalCyclesCount: billingCycles.length,
     budgetInsights: { ...budgetInsights, ...weeklyInsights },
     expensesByCategory,
     installmentProjection,

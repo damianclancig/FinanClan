@@ -59,7 +59,7 @@ export default function ManagePaymentMethodsPage() {
       closingDay: method.closingDay,
       isEnabled: !method.isEnabled
     };
-    const result = await updatePaymentMethod(method.id, values);
+    const result = await updatePaymentMethod(method.id, values, translations);
 
     if (result && 'error' in result) {
       toast({ title: translations.errorTitle, description: result.error, variant: "destructive" });
@@ -78,7 +78,7 @@ export default function ManagePaymentMethodsPage() {
     <div className="space-y-4">
       {paymentMethods.map((method) => (
         <Card key={method.id} className="shadow-lg border-2 border-primary/20 overflow-hidden">
-          <CardContent className="p-4 flex-grow space-y-3">
+          <CardContent className="p-4 grow space-y-3">
             <span className="font-semibold text-base break-all pr-4 block">{method.name}</span>
             <div className="space-y-2 text-sm text-muted-foreground">
               <div className="flex items-center">

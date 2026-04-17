@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { PiggyBank, Calendar, Plus, Edit, Trash2, MoreVertical, ArrowDownLeft, ArrowUpRight, CheckCircle2, XCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency, cn, getDateLocale } from "@/lib/utils";
+import { STORAGE_KEYS } from "@/lib/constants";
 import { format } from "date-fns";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { useRouter } from "next/navigation";
@@ -23,7 +24,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { TransferDialog } from "@/components/savings-funds/TransferDialog";
 import { SavingsFundProgress } from "@/components/savings-funds/SavingsFundProgress";
 import { IntroAccordion } from "@/components/common/IntroAccordion";
-import { es, pt, enUS } from 'date-fns/locale';
 
 export default function SavingsFundsPage() {
   const { user, dbUser } = useAuth();
@@ -43,12 +43,7 @@ export default function SavingsFundsPage() {
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [transferDetails, setTransferDetails] = useState<{ fund: SavingsFund, type: 'deposit' | 'withdrawal' } | null>(null);
 
-  const locales = {
-    en: enUS,
-    es: es,
-    pt: pt,
-  };
-  const currentLocale = locales[language] || enUS;
+  const currentLocale = getDateLocale(language);
 
   useEffect(() => {
     async function loadData() {
@@ -154,7 +149,7 @@ export default function SavingsFundsPage() {
         <IntroAccordion
           titleKey="savingsFundsIntroTitle"
           contentKeys={["savingsFundsIntroText1", "savingsFundsIntroText2", "savingsFundsIntroText3"]}
-          storageKey="savingsFundsIntroVisible"
+          storageKey={STORAGE_KEYS.INTRO_SAVINGS}
         />
 
         {funds.length === 0 ? (
@@ -175,14 +170,14 @@ export default function SavingsFundsPage() {
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <CardTitle className="break-words">{fund.name}</CardTitle>
-                          {isCompleted && <CheckCircle2 className="h-6 w-6 text-green-600 flex-shrink-0" />}
+                          <CardTitle className="wrap-break-word">{fund.name}</CardTitle>
+                          {isCompleted && <CheckCircle2 className="h-6 w-6 text-green-600 shrink-0" />}
                         </div>
-                        <p className="text-sm text-muted-foreground pt-1 break-words">{fund.description}</p>
+                        <p className="text-sm text-muted-foreground pt-1 wrap-break-word">{fund.description}</p>
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2 flex-shrink-0">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2 shrink-0">
                             <MoreVertical className="h-5 w-5" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -199,7 +194,7 @@ export default function SavingsFundsPage() {
                       </DropdownMenu>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-4 flex flex-col flex-grow">
+                  <CardContent className="p-4 flex flex-col grow">
                     <div className="mt-auto space-y-4">
                       {fund.targetAmount > 0 ? (
                         <SavingsFundProgress fund={fund} />

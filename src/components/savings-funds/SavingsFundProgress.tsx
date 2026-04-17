@@ -51,8 +51,8 @@ export function SavingsFundProgress({ fund, size }: SavingsFundProgressProps) {
             aria-label={ariaLabel}
             className="h-3 relative overflow-hidden"
             indicatorClassName={cn({
-                "bg-green-600 after:content-[''] after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/50 after:to-transparent after:animate-shimmer": isCompleted,
-                "[--bg-color-from:hsl(var(--primary))] [--bg-color-to:hsl(223,63%,35%)] bg-[repeating-linear-gradient(135deg,var(--bg-color-from),var(--bg-color-from)_10px,var(--bg-color-to)_10px,var(--bg-color-to)_20px)] bg-[length:200%_200%] animate-approaching-goal": isApproachingGoal,
+                "bg-green-600 after:content-[''] after:absolute after:inset-0 after:bg-linear-to-r after:from-transparent after:via-white/50 after:to-transparent after:animate-shimmer": isCompleted,
+                "[--bg-color-from:hsl(var(--primary))] [--bg-color-to:hsl(223,63%,35%)] bg-[repeating-linear-gradient(135deg,var(--bg-color-from),var(--bg-color-from)_10px,var(--bg-color-to)_10px,var(--bg-color-to)_20px)] bg-size-[200%_200%] animate-approaching-goal": isApproachingGoal,
             })}
         />
         <div className={cn("mt-1 text-xs font-mono", size === 'default' && "text-sm")}>

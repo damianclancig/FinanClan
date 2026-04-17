@@ -51,7 +51,7 @@ export default function EditPaymentMethodPage() {
   const handleFormSubmit = async (values: PaymentMethodFormValues) => {
     if (!dbUser || !paymentMethod) return;
 
-    const result = await updatePaymentMethod(paymentMethod.id, values);
+    const result = await updatePaymentMethod(paymentMethod.id, values, translations);
 
     if (result && 'error' in result) {
       toast({ title: translations.errorTitle, description: result.error, variant: "destructive" });

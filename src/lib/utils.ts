@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { enUS, es, pt } from "date-fns/locale";
+import type { Language } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -56,4 +58,23 @@ export function formatNumberForDisplay(numStr: string): string {
   }
   
   return formattedIntegerPart;
+};
+
+/**
+ * Retorna el locale de date-fns correspondiente al idioma de la aplicación.
+ * Centraliza la resolución del locale para evitar duplicación en componentes.
+ * @param language El idioma activo de la aplicación.
+ * @returns El objeto Locale de date-fns.
+ */
+export function getDateLocale(language: Language) {
+  const locales = { en: enUS, es, pt };
+  return locales[language] ?? enUS;
+};
+
+export const TRANSACTION_TYPE_COLORS: Record<string, string> = {
+  income: 'text-green-600 dark:text-green-400',
+  expense: 'text-red-600 dark:text-red-400',
+  deposit: 'text-blue-600 dark:text-blue-400',
+  withdrawal: 'text-orange-600 dark:text-orange-400',
+  transfer: 'text-gray-600 dark:text-gray-400',
 };

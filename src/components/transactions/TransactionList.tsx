@@ -16,13 +16,14 @@ import { Edit3, Trash2, TrendingUp, TrendingDown, ChevronLeft, ChevronRight, Lis
 import type { Transaction, Category, PaymentMethod } from "@/types";
 import { useTranslations } from "@/contexts/LanguageContext";
 import { format, isToday, isYesterday } from "date-fns";
-import { es, pt, enUS } from 'date-fns/locale';
+
 import { Card, CardContent } from "@/components/ui/card";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Separator } from '../ui/separator';
-import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrency, cn, getDateLocale, TRANSACTION_TYPE_COLORS } from '@/lib/utils';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getCategoryIcon } from "@/lib/icon-utils";
+import { CategoryIcon } from "@/components/common/CategoryIcon";
 import {
   Tooltip,
   TooltipContent,
@@ -64,12 +65,8 @@ export const TransactionList = React.forwardRef<HTMLDivElement, TransactionListP
     const endIndex = startIndex + itemsPerPage;
     const currentTransactions = transactions.slice(startIndex, endIndex);
 
-    const locales = {
-      en: enUS,
-      es: es,
-      pt: pt,
-    };
-    const currentLocale = locales[language] || enUS;
+    const currentLocale = getDateLocale(language);
+
 
     const formatDateWithDay = (dateString: string) => {
       const date = new Date(dateString);
@@ -89,9 +86,7 @@ export const TransactionList = React.forwardRef<HTMLDivElement, TransactionListP
       return (
         <div className="text-center py-10 text-muted-foreground">
           <ListTree className="mx-auto h-12 w-12 mb-4" />
-          <p className="text-lg">
-            {transactions.length > 0 ? translations.noTransactionsForFilters : translations.noTransactions}
-          </p>
+          <p className="text-lg">{translations.noTransactions}</p>
         </div>
       );
     }
@@ -166,12 +161,12 @@ export const TransactionList = React.forwardRef<HTMLDivElement, TransactionListP
                   return (
                     <React.Fragment key={transaction.id}>
                       <div id={`transaction-${transaction.id}`} className="flex flex-col">
-                        <div className="p-4 flex-grow space-y-1">
+                        <div className="p-4 grow space-y-1">
                           <div className="flex flex-col">
                             <span className="text-sm text-muted-foreground capitalize">
                               <span className="font-semibold">{dayPrefix}</span>, {format(new Date(transaction.date), "PPP", { locale: currentLocale })}
                             </span>
-                            <p className="text-base text-foreground/90 break-words w-full whitespace-pre-wrap">{transaction.description}</p>
+                            <p className="text-base text-foreground/90 wrap-break-word w-full whitespace-pre-wrap">{transaction.description}</p>
                           </div>
 
                           <Separator />
@@ -180,10 +175,7 @@ export const TransactionList = React.forwardRef<HTMLDivElement, TransactionListP
                             <div className="flex items-center">
 
                               <div className="flex items-center gap-2">
-                                {(() => {
-                                  const IconComponent = getCategoryIcon(category?.icon);
-                                  return IconComponent ? <IconComponent size={18} /> : null;
-                                })()}
+                                <CategoryIcon icon={category?.icon} />
                                 <span className="text-base">{category ? translateCategory(category) : 'N/A'}</span>
                               </div>
                             </div>
@@ -193,21 +185,11 @@ export const TransactionList = React.forwardRef<HTMLDivElement, TransactionListP
                             </div>
                           </div>
                           <div className="flex items-center justify-between text-lg font-semibold font-mono">
-                            <div className={cn("flex items-center gap-2", {
-                              'text-green-600': transaction.type === 'income',
-                              'text-red-600': transaction.type === 'expense',
-                              'text-blue-600': transaction.type === 'deposit',
-                              'text-orange-600': transaction.type === 'withdrawal',
-                            })}>
+                            <div className={cn("flex items-center gap-2", TRANSACTION_TYPE_COLORS[transaction.type])}>
                               {typeInfo.icon}
                               <span className="text-sm font-normal">{typeInfo.label}</span>
                             </div>
-                            <div className={cn("flex items-center gap-2", {
-                              'text-green-600': transaction.type === 'income',
-                              'text-red-600': transaction.type === 'expense',
-                              'text-blue-600': transaction.type === 'deposit',
-                              'text-orange-600': transaction.type === 'withdrawal',
-                            })}>
+                            <div className={cn("flex items-center gap-2", TRANSACTION_TYPE_COLORS[transaction.type])}>
                               <span>
                                 {(transaction.type === 'income' || transaction.type === 'deposit') ? '+' : '-'} {formatCurrency(Math.abs(transaction.amount))}
                               </span>
@@ -271,13 +253,10 @@ export const TransactionList = React.forwardRef<HTMLDivElement, TransactionListP
                             <span className="text-muted-foreground text-sm">{format(new Date(transaction.date), "dd/MM/yyyy", { locale: currentLocale })}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-base break-words whitespace-pre-wrap">{transaction.description}</TableCell>
+                        <TableCell className="text-base wrap-break-word whitespace-pre-wrap">{transaction.description}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-base gap-2">
-                            {(() => {
-                              const IconComponent = getCategoryIcon(category?.icon);
-                              return IconComponent ? <IconComponent size={18} /> : null;
-                            })()}
+                            <CategoryIcon icon={category?.icon} />
                             {category ? translateCategory(category) : 'N/A'}
                           </Badge>
                         </TableCell>
@@ -297,12 +276,7 @@ export const TransactionList = React.forwardRef<HTMLDivElement, TransactionListP
                             </TooltipContent>
                           </Tooltip>
                         </TableCell>
-                        <TableCell className={cn('text-right text-base font-mono', {
-                          'text-green-600 dark:text-green-400': transaction.type === 'income',
-                          'text-red-600 dark:text-red-400': transaction.type === 'expense',
-                          'text-blue-600 dark:text-blue-400': transaction.type === 'deposit',
-                          'text-orange-600 dark:text-orange-400': transaction.type === 'withdrawal',
-                        })}>
+                        <TableCell className={cn('text-right text-base font-mono', TRANSACTION_TYPE_COLORS[transaction.type])}>
                           {formatCurrency(transaction.amount)}
                         </TableCell>
                         <TableCell className="text-center">

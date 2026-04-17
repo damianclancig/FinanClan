@@ -10,7 +10,8 @@ import { FormPageLayout } from "@/components/layout/FormPageLayout";
 import { EditPageLoader } from "@/components/common/EditPageLoader";
 import { useTranslations } from "@/contexts/LanguageContext";
 import type { Tax } from "@/types";
-import { TaxForm, type TaxFormSubmitValues } from "@/components/taxes/TaxForm";
+import { TaxForm } from "@/components/taxes/TaxForm";
+import { TaxFormSchemaType } from "@/components/taxes/form/TaxFormSchema";
 
 export default function EditTaxPage() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function EditTaxPage() {
       setIsLoading(true);
       try {
         const [taxResult, namesResult] = await Promise.all([
-          getTaxById(id),
+          getTaxById(id, translations),
           getUniqueTaxNames()
         ]);
 
@@ -67,7 +68,7 @@ export default function EditTaxPage() {
     fetchData();
   }, [id, dbUser, router, toast, translations]);
 
-  const handleFormSubmit = async (values: TaxFormSubmitValues) => {
+  const handleFormSubmit = async (values: TaxFormSchemaType) => {
     if (!dbUser || !tax) return;
 
     const result = await updateTax(tax.id, {

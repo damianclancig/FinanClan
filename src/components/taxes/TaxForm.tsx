@@ -1,11 +1,7 @@
-
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import React, { useState, useEffect, useRef } from "react";
-
+import React from "react";
+import { DollarSign, Landmark, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -23,126 +19,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DollarSign, Landmark, Calendar } from "lucide-react";
-import type { Tax, TaxFormValues, Translations } from "@/types";
+
+import type { Tax, Translations } from "@/types";
 import { MONTHS } from "@/types";
 import { useTranslations } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
-import { formatNumberForDisplay } from "@/lib/utils";
 
-export type TaxFormSubmitValues = z.infer<ReturnType<typeof getFormSchema>>;
+import { useTaxForm } from "./form/useTaxForm";
+import { TaxFormSchemaType } from "./form/TaxFormSchema";
 
 interface TaxFormProps {
-  onSubmit: (values: TaxFormSubmitValues) => void;
+  onSubmit: (values: TaxFormSchemaType) => void;
   onClose: () => void;
   initialData?: Partial<Tax>;
   existingTaxNames?: string[];
 }
 
-const getFormSchema = (translations: Translations) => z.object({
-  name: z.string().min(1, { message: translations.taxNameRequired }),
-  month: z.coerce.number().min(0).max(11),
-  year: z.coerce.number(),
-  amount: z.coerce
-    .number({ required_error: translations.amountRequired, invalid_type_error: translations.amountRequired })
-    .positive({ message: translations.amountPositive }),
-});
-
-export function TaxForm({ onSubmit, onClose, initialData, existingTaxNames = [] }: TaxFormProps) {
+export function TaxForm(props: TaxFormProps) {
   const { translations, translateMonth } = useTranslations();
-  const [displayAmount, setDisplayAmount] = useState<string>("");
-  const formSchema = getFormSchema(translations);
-
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
-
-  const currentYear = new Date().getFullYear();
-  const years = [currentYear - 1, currentYear, currentYear + 1];
-
-  const form = useForm<TaxFormSubmitValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: initialData?.name || "",
-      month: initialData?.month ?? new Date().getMonth(),
-      year: initialData?.year ?? currentYear,
-      amount: initialData?.amount,
-    },
+  
+  const { form, years, suggestionsRef, states, handlers } = useTaxForm({
+    onSubmit: props.onSubmit,
+    initialData: props.initialData,
+    existingTaxNames: props.existingTaxNames,
   });
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (initialData) {
-      form.reset({
-        name: initialData.name || "",
-        month: initialData.month ?? new Date().getMonth(),
-        year: initialData.year ?? currentYear,
-        amount: initialData.amount,
-      });
-      if (initialData.amount) {
-        setDisplayAmount(formatNumberForDisplay(String(initialData.amount.toFixed(2))));
-      }
-    }
-  }, [initialData, form, currentYear]);
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    form.setValue("name", value);
-    if (value) {
-      const filtered = existingTaxNames.filter(name =>
-        name.toLowerCase().includes(value.toLowerCase()) && name.toLowerCase() !== value.toLowerCase()
-      );
-      setSuggestions(filtered);
-      setShowSuggestions(filtered.length > 0);
-    } else {
-      setShowSuggestions(false);
-    }
-  };
-
-  const handleSuggestionClick = (name: string) => {
-    form.setValue("name", name);
-    setShowSuggestions(false);
-  };
-
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value;
-    let numericValue = rawValue.replace(/[^0-9.]/g, '');
-    const parts = numericValue.split('.');
-
-    if (parts.length > 2) {
-      numericValue = `${parts[0]}.${parts.slice(1).join('')}`;
-    }
-
-    if (parts[1] && parts[1].length > 2) {
-      parts[1] = parts[1].substring(0, 2);
-      numericValue = parts.join('.');
-    }
-
-    const formattedDisplay = formatNumberForDisplay(numericValue);
-    setDisplayAmount(formattedDisplay);
-
-    const valueForForm = numericValue.endsWith('.') ? numericValue.slice(0, -1) : numericValue;
-    const parsedNumber = parseFloat(valueForForm);
-
-    if (!isNaN(parsedNumber)) {
-      form.setValue('amount', parsedNumber, { shouldValidate: true });
-    } else {
-      form.setValue('amount', 0, { shouldValidate: true });
-    }
-  };
+  const { displayAmount, suggestions, showSuggestions } = states;
+  const { 
+    handleNameChange, handleSuggestionClick, handleAmountChange, 
+    handleAmountBlur, onSubmit 
+  } = handlers;
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-4">
         <FormField
           control={form.control}
           name="name"
@@ -246,12 +156,7 @@ export function TaxForm({ onSubmit, onClose, initialData, existingTaxNames = [] 
                     onChange={handleAmountChange}
                     onBlur={() => {
                       field.onBlur();
-                      const value = form.getValues('amount');
-                      if (value) {
-                        setDisplayAmount(formatNumberForDisplay(String(value.toFixed(2))));
-                      } else {
-                        setDisplayAmount('');
-                      }
+                      handleAmountBlur();
                     }}
                   />
                 </FormControl>
@@ -262,7 +167,7 @@ export function TaxForm({ onSubmit, onClose, initialData, existingTaxNames = [] 
         </div>
 
         <div className="flex justify-end space-x-3 pt-2">
-          <Button type="button" variant="outline" onClick={onClose} className="text-base">
+          <Button type="button" variant="outline" onClick={props.onClose} className="text-base">
             {translations.cancel}
           </Button>
           <Button type="submit" className="bg-primary hover:bg-primary/90 text-base">

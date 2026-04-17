@@ -2,12 +2,13 @@
 'use server';
 
 import { ObjectId } from 'mongodb';
-import { getDb, mapMongoDocumentPaymentMethod } from '@/lib/actions-helpers';
+import { getDb, mapMongoDocumentPaymentMethod, insertAndReturn } from '@/lib/actions-helpers';
 import { validateObjectId } from '@/lib/validation-helpers';
 import { handleActionError } from '@/lib/error-helpers';
 import { getAuthenticatedUser } from '@/lib/auth-server';
 import { revalidateUserTag, CacheTag } from '@/lib/cache-helpers';
-import type { PaymentMethod, PaymentMethodFormValues } from '@/types';
+import type { PaymentMethod, PaymentMethodFormValues, Translations } from '@/types';
+
 
 async function seedDefaultPaymentMethods(userId: string) {
   const { paymentMethodsCollection } = await getDb();
@@ -62,24 +63,19 @@ export async function addPaymentMethod(data: PaymentMethodFormValues): Promise<P
     const { id: userId } = await getAuthenticatedUser();
     const { paymentMethodsCollection } = await getDb();
     const documentToInsert = { ...data, userId };
-    const result = await paymentMethodsCollection.insertOne(documentToInsert);
-
-    if (!result.insertedId) {
-      throw new Error('Failed to insert payment method.');
-    }
-
-    revalidateUserTag(userId, CacheTag.PAYMENT_METHODS);
-    const newMethod = await paymentMethodsCollection.findOne({ _id: result.insertedId });
-    if (!newMethod) {
-      throw new Error('Could not find the newly created payment method.');
-    }
-    return mapMongoDocumentPaymentMethod(newMethod);
+    return await insertAndReturn(
+      paymentMethodsCollection,
+      documentToInsert,
+      mapMongoDocumentPaymentMethod,
+      userId,
+      CacheTag.PAYMENT_METHODS
+    );
   } catch (error) {
     return handleActionError(error, 'add payment method');
   }
 }
 
-export async function updatePaymentMethod(id: string, data: PaymentMethodFormValues): Promise<PaymentMethod | { error: string }> {
+export async function updatePaymentMethod(id: string, data: PaymentMethodFormValues, translations: Translations): Promise<PaymentMethod | { error: string }> {
   try {
     const { id: userId } = await getAuthenticatedUser();
     validateObjectId(id, 'payment method ID');
@@ -96,7 +92,7 @@ export async function updatePaymentMethod(id: string, data: PaymentMethodFormVal
     );
 
     if (result.matchedCount === 0) {
-      return { error: 'Payment method not found or you do not have permission to edit it.' };
+      return { error: translations.notFoundOrNoPermission };
     }
 
     revalidateUserTag(userId, CacheTag.PAYMENT_METHODS);

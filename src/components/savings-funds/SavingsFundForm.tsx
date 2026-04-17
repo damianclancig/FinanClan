@@ -1,96 +1,47 @@
-
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import React from "react";
 import { format } from "date-fns";
 import { es, pt, enUS } from "date-fns/locale";
-import React, { useEffect, useState } from "react";
+import { CalendarIcon, DollarSign, PiggyBank, Edit3 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
-import { CalendarIcon, DollarSign, PiggyBank, Edit3 } from "lucide-react";
-import type { SavingsFund, Translations } from "@/types";
-import { useTranslations } from "@/contexts/LanguageContext";
-import { formatNumberForDisplay } from "@/lib/utils";
 
-export type SavingsFundFormSubmitValues = z.infer<ReturnType<typeof getFormSchema>>;
+import { cn } from "@/lib/utils";
+import type { SavingsFund } from "@/types";
+import { useTranslations } from "@/contexts/LanguageContext";
+
+import { useSavingsFundForm } from "./form/useSavingsFundForm";
+import { SavingsFundFormSchemaType } from "./form/SavingsFundFormSchema";
 
 interface SavingsFundFormProps {
-  onSubmit: (values: SavingsFundFormSubmitValues) => void;
+  onSubmit: (values: SavingsFundFormSchemaType) => void;
   onClose: () => void;
   initialData?: Partial<SavingsFund>;
 }
 
-const getFormSchema = (translations: Translations) => z.object({
-  name: z.string().min(1, { message: translations.savingsFundNameRequired }),
-  description: z.string().min(1, { message: translations.savingsFundDescriptionRequired }),
-  targetAmount: z.coerce.number({ required_error: translations.savingsFundTargetAmountRequired }).positive({ message: translations.savingsFundTargetAmountPositive }),
-  targetDate: z.date().optional(),
-});
-
-export function SavingsFundForm({ onSubmit, onClose, initialData }: SavingsFundFormProps) {
+export function SavingsFundForm(props: SavingsFundFormProps) {
   const { translations, language } = useTranslations();
-  const [isCalendarOpen, setCalendarOpen] = useState(false);
-  const [displayAmount, setDisplayAmount] = useState<string>('');
-
-  const formSchema = getFormSchema(translations);
-
-  const form = useForm<SavingsFundFormSubmitValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: initialData?.name || "",
-      description: initialData?.description || "",
-      targetAmount: initialData?.targetAmount,
-      targetDate: initialData?.targetDate ? new Date(initialData.targetDate) : undefined,
-    },
+  
+  const { form, states, handlers } = useSavingsFundForm({
+    onSubmit: props.onSubmit,
+    initialData: props.initialData,
   });
 
-  useEffect(() => {
-    if (initialData?.targetAmount) {
-      setDisplayAmount(formatNumberForDisplay(String(initialData.targetAmount.toFixed(2))));
-    }
-    form.reset({
-      name: initialData?.name || "",
-      description: initialData?.description || "",
-      targetAmount: initialData?.targetAmount,
-      targetDate: initialData?.targetDate ? new Date(initialData.targetDate) : undefined,
-    });
-  }, [initialData, form]);
+  const { isCalendarOpen, setCalendarOpen, displayAmount } = states;
+  const { handleAmountChange, onSubmit } = handlers;
 
   const locales = { en: enUS, es, pt };
   const currentLocale = locales[language] || enUS;
 
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value;
-    let numericValue = rawValue.replace(/[^0-9.]/g, '');
-    const parts = numericValue.split('.');
-
-    if (parts.length > 2) {
-      numericValue = `${parts[0]}.${parts.slice(1).join('')}`;
-    }
-
-    if (parts[1] && parts[1].length > 2) {
-      parts[1] = parts[1].substring(0, 2);
-      numericValue = parts.join('.');
-    }
-
-    const formattedDisplay = formatNumberForDisplay(numericValue);
-    setDisplayAmount(formattedDisplay);
-
-    const valueForForm = numericValue.replace(/,/g, '');
-    const parsedNumber = parseFloat(valueForForm);
-    form.setValue('targetAmount', isNaN(parsedNumber) ? 0 : parsedNumber, { shouldValidate: true });
-  };
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={onSubmit} className="space-y-6">
         <FormField
           control={form.control}
           name="name"
@@ -150,7 +101,7 @@ export function SavingsFundForm({ onSubmit, onClose, initialData }: SavingsFundF
                   className={cn("w-full pl-3 text-left font-normal text-base", !field.value && "text-muted-foreground")}
                   onClick={() => setCalendarOpen(true)}
                 >
-                  {field.value ? format(field.value, "PPP", { locale: currentLocale }) : <span>{translations.savingsFundTargetDate}</span>}
+                  {field.value instanceof Date ? format(field.value, "PPP", { locale: currentLocale }) : <span>{translations.savingsFundTargetDate}</span>}
                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                 </Button>
               </FormControl>
@@ -162,7 +113,7 @@ export function SavingsFundForm({ onSubmit, onClose, initialData }: SavingsFundF
                     mode="single"
                     selected={field.value}
                     onSelect={(date) => {
-                      field.onChange(date);
+                      if (date) field.onChange(date);
                       setCalendarOpen(false);
                     }}
                     initialFocus
@@ -174,7 +125,7 @@ export function SavingsFundForm({ onSubmit, onClose, initialData }: SavingsFundF
           )}
         />
         <div className="flex justify-end space-x-2">
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={props.onClose}>
             {translations.cancel}
           </Button>
           <Button type="submit">{translations.save}</Button>

@@ -13,9 +13,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, getDateLocale } from "@/lib/utils";
+import { STORAGE_KEYS } from "@/lib/constants";
 import { format, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
-import { es, pt, enUS } from 'date-fns/locale';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { IntroAccordion } from "@/components/common/IntroAccordion";
 
@@ -30,12 +30,7 @@ export default function InstallmentsPage() {
   const [totalForCurrentMonth, setTotalForCurrentMonth] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  const locales = {
-    en: enUS,
-    es: es,
-    pt: pt,
-  };
-  const currentLocale = locales[language] || enUS;
+  const currentLocale = getDateLocale(language);
 
   useEffect(() => {
     async function loadInstallments() {
@@ -92,7 +87,7 @@ export default function InstallmentsPage() {
         <IntroAccordion
           titleKey="installmentsIntroTitle"
           contentKeys={["installmentsIntroText1", "installmentsIntroText2", "installmentsIntroText3"]}
-          storageKey="installmentsIntroVisible"
+          storageKey={STORAGE_KEYS.INTRO_INSTALLMENTS}
         />
         <Card className="shadow-xl border-2 border-primary">
           <CardContent>
@@ -245,7 +240,7 @@ export default function InstallmentsPage() {
         <IntroAccordion
           titleKey="installmentsIntroTitle"
           contentKeys={["installmentsIntroText1", "installmentsIntroText2", "installmentsIntroText3"]}
-          storageKey="installmentsIntroVisible"
+          storageKey={STORAGE_KEYS.INTRO_INSTALLMENTS}
         />
 
         {pendingDetails.length > 0 ? (

@@ -1,12 +1,11 @@
-
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import React from "react";
 import { format } from "date-fns";
-import { es, pt, enUS } from "date-fns/locale";
-import React, { useEffect, useState } from "react";
+import { 
+  CalendarIcon, DollarSign, Edit3, Type, ListTree, CreditCard, 
+  TrendingUp, TrendingDown, Layers 
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -33,195 +32,48 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cn, formatNumberForDisplay } from "@/lib/utils";
-import { CalendarIcon, DollarSign, Edit3, Type, ListTree, CreditCard, TrendingUp, TrendingDown, Layers } from "lucide-react";
-import type { Transaction, Category, PaymentMethod, Translations } from "@/types";
-import { useTranslations } from "@/contexts/LanguageContext";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
+
+import { cn, getDateLocale } from "@/lib/utils";
 import { getCategoryIcon } from "@/lib/icon-utils";
+import { useTranslations } from "@/contexts/LanguageContext";
+import type { Category, PaymentMethod, TransactionFormValues } from "@/types";
 
-
-// Form schema type for validation (inferred from Zod schema)
-type TransactionFormSchema = z.infer<ReturnType<typeof getFormSchema>>;
-
-export type TransactionFormValues = Omit<Transaction, "id" | "userId">;
+import { useTransactionForm } from "./form/useTransactionForm";
 
 interface TransactionFormProps {
   onSubmit: (values: TransactionFormValues) => void;
   onSaveAndAddAnother?: (values: TransactionFormValues) => void;
-  initialData?: Partial<Transaction>;
+  initialData?: Partial<TransactionFormValues> & { id?: string };
   onClose: () => void;
   isTaxPayment?: boolean;
   categories: Category[];
   paymentMethods: PaymentMethod[];
 }
 
-const getFormSchema = (translations: Translations) => z.object({
-  description: z.string().min(1, { message: translations.descriptionRequired }).max(100, { message: translations.descriptionMaxLength }),
-  amount: z.coerce
-    .number({ required_error: translations.amountRequired, invalid_type_error: translations.amountRequired })
-    .positive({ message: translations.amountPositive }),
-  date: z.date({ required_error: translations.dateRequired }),
-  categoryId: z.string({ required_error: translations.categoryRequired }),
-  type: z.union([z.enum(["income", "expense"]), z.undefined()]),
-  paymentMethodId: z.string({ required_error: translations.paymentMethodRequired }),
-  installments: z.number().min(1).max(120).optional(),
-});
-
-
-export function TransactionForm({ onSubmit, onSaveAndAddAnother, initialData, onClose, isTaxPayment = false, categories, paymentMethods }: TransactionFormProps) {
+export function TransactionForm(props: TransactionFormProps) {
+  const { categories, paymentMethods, onClose, isTaxPayment, initialData } = props;
   const { translations, language, translateCategory } = useTranslations();
-  const [isCalendarOpen, setCalendarOpen] = React.useState(false);
-  const [displayAmount, setDisplayAmount] = useState<string>('');
-  const [showInstallments, setShowInstallments] = useState(false);
-  const [installments, setInstallments] = useState(initialData?.installments || 1);
-  const [isManualInstallments, setIsManualInstallments] = useState(false);
-
-  const formSchema = getFormSchema(translations);
-
-  const form = useForm<TransactionFormSchema>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      description: initialData?.description || "",
-      amount: initialData?.amount,
-      date: initialData?.date ? new Date(initialData.date) : new Date(),
-      categoryId: initialData?.categoryId || undefined,
-      type: (initialData?.type === 'income' || initialData?.type === 'expense') ? initialData.type : undefined,
-      paymentMethodId: initialData?.paymentMethodId || undefined,
-      installments: initialData?.installments || 1,
-    },
+  
+  const { form, states, handlers } = useTransactionForm({
+    onSubmit: props.onSubmit,
+    onSaveAndAddAnother: props.onSaveAndAddAnother,
+    initialData: props.initialData,
+    paymentMethods: props.paymentMethods,
   });
 
-  useEffect(() => {
-    if (initialData?.amount) {
-      setDisplayAmount(formatNumberForDisplay(String(initialData.amount.toFixed(2))));
-    }
+  const { 
+    isCalendarOpen, setCalendarOpen, displayAmount, 
+    showInstallments, installments, isManualInstallments 
+  } = states;
 
-    const initialInstallments = initialData?.installments || 1;
-    setInstallments(initialInstallments);
-    if (initialInstallments > 24) {
-      setIsManualInstallments(true);
-    } else {
-      setIsManualInstallments(false);
-    }
+  const { 
+    handleFormSubmit, handleSaveAndAddAnother, handleAmountChange, 
+    handleInstallmentsChange, handleManualInstallmentChange 
+  } = handlers;
 
-    form.reset({
-      description: initialData?.description || "",
-      amount: initialData?.amount,
-      date: initialData?.date ? new Date(initialData.date) : new Date(),
-      categoryId: initialData?.categoryId || undefined,
-      type: (initialData?.type === 'income' || initialData?.type === 'expense') ? initialData.type : undefined,
-      paymentMethodId: initialData?.paymentMethodId || undefined,
-      installments: initialInstallments,
-    });
-  }, [initialData, form]);
-
-  const selectedPaymentMethodId = form.watch("paymentMethodId");
-  const transactionType = form.watch("type");
-
-  useEffect(() => {
-    const paymentMethod = paymentMethods.find(pm => pm.id === selectedPaymentMethodId);
-    if (paymentMethod && paymentMethod.type === 'Credit Card' && transactionType === 'expense') {
-      setShowInstallments(true);
-    } else {
-      setShowInstallments(false);
-      setInstallments(1);
-      form.setValue('installments', 1);
-      setIsManualInstallments(false);
-    }
-  }, [selectedPaymentMethodId, transactionType, paymentMethods, form]);
-
-  const locales = {
-    en: enUS,
-    es: es,
-    pt: pt,
-  };
-  const currentLocale = locales[language] || enUS;
-
-  const handleSubmit = (values: TransactionFormSchema) => {
-    // Validate that type is selected
-    if (!values.type) {
-      form.setError('type', { message: translations.typeRequired });
-      return;
-    }
-    // Convert Date to string for TransactionFormValues
-    const formValues: TransactionFormValues = {
-      ...values,
-      type: values.type,
-      date: values.date.toISOString(),
-    };
-    onSubmit(formValues);
-  };
-
-  const handleSaveAndAddAnother = (values: TransactionFormSchema) => {
-    if (onSaveAndAddAnother) {
-      // Validate that type is selected
-      if (!values.type) {
-        form.setError('type', { message: translations.typeRequired });
-        return;
-      }
-      // Convert Date to string for TransactionFormValues
-      const formValues: TransactionFormValues = {
-        ...values,
-        type: values.type,
-        date: values.date.toISOString(),
-      };
-      onSaveAndAddAnother(formValues);
-    }
-  };
-
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value;
-    let numericValue = rawValue.replace(/[^0-9.]/g, '');
-    const parts = numericValue.split('.');
-
-    if (parts.length > 2) {
-      numericValue = `${parts[0]}.${parts.slice(1).join('')}`;
-    }
-
-    if (parts[1] && parts[1].length > 2) {
-      parts[1] = parts[1].substring(0, 2);
-      numericValue = parts.join('.');
-    }
-
-    const formattedDisplay = formatNumberForDisplay(numericValue);
-    setDisplayAmount(formattedDisplay);
-
-    const valueForForm = numericValue.replace(/,/g, '');
-    const parsedNumber = parseFloat(valueForForm);
-    form.setValue('amount', isNaN(parsedNumber) ? 0 : parsedNumber, { shouldValidate: true });
-  };
-
-  const handleInstallmentsChange = (value: number[]) => {
-    const newInstallmentValue = value[0];
-    if (newInstallmentValue >= 25) {
-      setIsManualInstallments(true);
-      if (installments < 25) {
-        form.setValue('installments', undefined);
-      }
-    } else {
-      setIsManualInstallments(false);
-      setInstallments(newInstallmentValue);
-      form.setValue('installments', newInstallmentValue);
-    }
-  };
-
-  const handleManualInstallmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const numValue = parseInt(value, 10);
-
-    if (value === '') {
-      form.setValue('installments', undefined);
-      setInstallments(25);
-    } else if (!isNaN(numValue) && numValue >= 2 && numValue <= 120) {
-      form.setValue('installments', numValue);
-      setInstallments(numValue);
-    } else if (value.length <= 3) {
-      form.setValue('installments', undefined, { shouldValidate: true });
-    }
-  };
-
+  const currentLocale = getDateLocale(language);
 
   const getCategoryDisplay = (cat: Category) => {
     const IconComponent = getCategoryIcon(cat.icon);
@@ -264,7 +116,7 @@ export function TransactionForm({ onSubmit, onSaveAndAddAnother, initialData, on
                     placeholder="0.00"
                     value={displayAmount}
                     onChange={handleAmountChange}
-                    onBlur={field.onBlur} // Keep onBlur for validation triggers
+                    onBlur={field.onBlur}
                   />
                 </FormControl>
                 <FormMessage />
@@ -288,7 +140,7 @@ export function TransactionForm({ onSubmit, onSaveAndAddAnother, initialData, on
                     )}
                     onClick={() => setCalendarOpen(true)}
                   >
-                    {field.value ? (
+                    {field.value instanceof Date ? (
                       format(field.value, "PPP", { locale: currentLocale })
                     ) : (
                       <span>{translations.date}</span>
@@ -479,7 +331,7 @@ export function TransactionForm({ onSubmit, onSaveAndAddAnother, initialData, on
         )}
 
         <div className="pt-2 flex flex-col md:flex-row md:justify-end gap-3">
-          {onSaveAndAddAnother && !initialData?.id && (
+          {props.onSaveAndAddAnother && !initialData?.id && (
             <Button
               type="button"
               variant="secondary"
@@ -493,7 +345,7 @@ export function TransactionForm({ onSubmit, onSaveAndAddAnother, initialData, on
             <Button type="button" variant="outline" onClick={onClose} className="flex-1 md:flex-initial text-base">
               {translations.cancel}
             </Button>
-            <Button type="button" onClick={form.handleSubmit(handleSubmit)} className="bg-primary hover:bg-primary/90 flex-1 md:flex-initial text-base">
+            <Button type="button" onClick={form.handleSubmit(handleFormSubmit)} className="bg-primary hover:bg-primary/90 flex-1 md:flex-initial text-base">
               {translations.save}
             </Button>
           </div>
