@@ -1,147 +1,102 @@
-# FinanClan: Tu Gestor de Finanzas Personales
+# FinanClan: Sistema de Gestion de Finanzas Personales
 
-![CI](https://github.com/damianclancig/financlan/workflows/CI/badge.svg)
+FinanClan es una aplicacion web progresiva (PWA) de arquitectura moderna disenada para la administracion y el control riguroso de ingresos y gastos personales. La plataforma provee un panel de analisis predictivo, gestion eficiente de datos financieros y una integracion de carga rapida mediante la API de Telegram.
 
-FinanClan es una aplicación web moderna y segura diseñada para ayudarte a llevar un control claro y sencillo de tus ingresos y gastos. Con una interfaz intuitiva y potentes funcionalidades, gestionar tus finanzas nunca ha sido tan fácil.
+## Caracteristicas Principales
 
-## ✨ Características Principales
-
-- **Gestión Completa de Transacciones**: Crea, visualiza, edita y elimina transacciones de ingresos y gastos de forma rápida y sencilla.
-- **Gestión de Ciclos de Facturación**: Define tus propios períodos financieros (ej: de salario a salario) para un análisis preciso y contextualizado de tus finanzas. Cierra un ciclo y empieza uno nuevo con un solo clic.
-- **Gestión de Fondos de Ahorro**: Crea objetivos de ahorro personalizados (vacaciones, un nuevo gadget, etc.), deposita o retira dinero de ellos, y visualiza el progreso para alcanzar tus metas financieras.
-- **Gestión de Categorías Personalizadas**: Añade, renombra y habilita o deshabilita tus propias categorías de gastos e ingresos para adaptar la aplicación a tu vida financiera. Las categorías por defecto son simples y concisas para un inicio rápido.
-- **Gestión de Métodos de Pago Personalizados**: Define tus propios métodos de pago, como tarjetas de crédito de bancos específicos, billeteras virtuales o efectivo, para un seguimiento detallado.
-- **Gestión de Cuotas Pendientes**: Visualiza de forma centralizada todas tus compras realizadas en cuotas, el estado de cada una, el monto total adeudado y el total a pagar en el mes actual. Incluye un slider y un campo de entrada manual para compras con un número elevado de cuotas.
-- **Gestión de Impuestos y Servicios**: Registra pagos recurrentes como impuestos o servicios (Luz, Agua, Gas), visualiza su historial, márcalos como pagados y registra fácilmente nuevos períodos.
-- **Panel de Totales y Gráficos Interactivos**: Obtén una visión clara de tu salud financiera con tarjetas que muestran tus ingresos totales, gastos totales y el balance actual. Visualiza la distribución de tus gastos por categoría, la comparativa de ingresos vs. gastos, el **progreso de tus fondos de ahorro** y una **proyección anual de tus cuotas pendientes** con gráficos dinámicos.
-- **Búsqueda y Filtrado Avanzado**: Encuentra transacciones específicas fácilmente utilizando filtros por tipo (ingreso/gasto), categoría, rango de fechas o buscando por descripción.
-- **Experiencia de Usuario Mejorada**: Disfruta de una interfaz pulida con un **encabezado fijo**, efectos visuales como "glassmorphism" y un fondo animado. La navegación se siente fluida gracias a la **restauración inteligente de la posición del scroll** al volver de editar una transacción, incluso entre diferentes páginas de la lista.
-- **Diseño Responsivo y Botón Flotante Inteligente**: Goza de una experiencia de usuario perfecta tanto en tu ordenador como en dispositivos móviles, con un botón de acción flotante (FAB) que se oculta al hacer scroll para no interrumpir la visualización.
-- **Soporte Multilenguaje**: La interfaz está disponible en Español, Inglés y Portugués.
-- **Temas Claro y Oscuro**: Cambia entre el tema claro y oscuro para adaptar la aplicación a tus preferencias visuales.
-- **Seguridad Multiusuario**: Cada usuario tiene su propia cuenta segura. Tus registros financieros son privados y solo tú puedes acceder a ellos.
-- **Autenticación con Google**: Inicia sesión de forma segura y con un solo clic utilizando tu cuenta de Google, gracias a la integración con Firebase Authentication.
-- **Optimización para SEO**: Configuración completa de metadatos (títulos dinámicos, descripciones, palabras clave) y etiquetas Open Graph para una excelente visualización al compartir en redes sociales. Incluye `robots.txt` y `sitemap.xml` para una indexación eficiente en motores de búsqueda.
-- **Analíticas y Rendimiento**: Integrado con Vercel Analytics y Speed Insights para monitorizar el tráfico y el rendimiento de la aplicación en tiempo real.
-
-## 🛠️ Pila Tecnológica
-
-Este proyecto está construido con tecnologías modernas y robustas para garantizar un rendimiento y escalabilidad excelentes.
-
-- **Framework**: [Next.js](https://nextjs.org/) (usando App Router y Server Components)
-- **Lenguaje**: [TypeScript](https://www.typescriptlang.org/)
-- **Estilos**: [Tailwind CSS](https://tailwindcss.com/)
-- **Componentes de UI**: [ShadCN UI](https://ui.shadcn.com/) y [Radix UI](https://www.radix-ui.com/)
-- **Manejo de Fechas**: [date-fns](https://date-fns.org/) y [date-fns-tz](https://github.com/marnusw/date-fns-tz)
-- **Gráficos**: [Recharts](https://recharts.org/)
-- **Base de Datos**: [MongoDB](https://www.mongodb.com/) (a través de MongoDB Atlas)
-- **Autenticación**: [Firebase Authentication](https://firebase.google.com/docs/auth)
-- **Analíticas**: [Vercel Analytics](https://vercel.com/analytics) y [Speed Insights](https://vercel.com/speed-insights)
-- **Iconos**: [Lucide React](https://lucide.dev/)
+- Gestion Completa de Transacciones: Sistema de altas, bajas y modificaciones (CRUD) para registros de ingresos y egresos.
+- Ciclos de Facturacion Personalizados: Segmentacion de periodos financieros adaptables a las particularidades del flujo de caja del usuario (ej. ciclos salariales).
+- Fondos de Ahorro: Creacion y actualizacion de multiples objetivos de ahorro con visualizaciones enfocadas en el grado de progreso.
+- Gestion de Pasivos y Cuotas: Administracion orientada a las compras en modalidad de cuotas, con rastreo del saldo adeudado proyectado al mes en curso.
+- Control de Impuestos y Servicios: Panel recurrente para seguimiento y cancelacion historica de servicios facturados, identificando variaciones a traves del tiempo.
+- Integracion de Procesamiento de Lenguaje Natural (NLP) via Telegram: Vinculacion segura de cuentas para el registro de transacciones directamente mediante interacciones textuales.
+- Categorias y Metodos de Pago Dinamicos: Personalizacion de identificadores de gasto y fuentes de fondos con estados logicos configurables.
+- Dashboard Analitico: Panel agregador que proporciona ratios de liquidez, graficos de distribucion de gastos por categoria y modelos de proyeccion lineal.
+- Experiencia de Usuario Funcional: Entorno de interfaz implementando componentes visuales modernos, temas claro/oscuro rigurosos y retencion inteligente de estado y scroll en un formato "mobile-first".
+- Sistema Multilenguaje (i18n): Soporte base para la Internacionalizacion con los idiomas Espanol (es), Ingles (en) y Portugues (pt).
+- Autenticacion Descentralizada: Proteccion de rutas y gestion de sesiones basada en NextAuth con el proveedor de identidades de Google u otros autorizadores robustos.
 
 ---
 
-## 🌐 Demo en Vivo
+## Pila Tecnologica
 
-¡Puedes probar la aplicación ahora mismo! Visita el siguiente enlace para acceder a la versión en producción:
+El proyecto opera sobre una base orientada a la velocidad de respuesta, aprovechando Server Components y rendering hibrido.
 
-**[Acceder a FinanClan](https://caja.clancig.com.ar)**
+- Core Framework: Next.js (v16.2.3)
+- Lenguaje de Desarrollo: TypeScript (v6)
+- Estilizado de Interfaz: Tailwind CSS (v3.4.19)
+- Componentes UI Primitivos: Radix UI
+- Componentes UI Pre-empaquetados: ShadCN UI
+- Libreria de Visualizacion de Datos: Recharts (v3.8.1)
+- Persistencia de Datos y Modelo: MongoDB (v7.1.1)
+- Sistema Integral de Autenticacion: NextAuth / Auth.js (v5.0.0-beta.30)
+- Estandarizacion Temporal: date-fns (v4.1.0)
+- Suite de Testing y Cobertura: Vitest (v4.1.4)
+- Analiticas de Red y Performance: Vercel Analytics (v2.0.1) & Speed Insights (v2.0.0)
 
 ---
 
-## 🚀 Instalación y Puesta en Marcha
+## Despliegue en Produccion
 
-Sigue estos pasos para clonar, configurar y ejecutar el proyecto en tu entorno local.
+La aplicacion mantiene una version desplegada en produccion de continua integracion y despliegue lista para su uso:
 
-### Prerrequisitos
+Acceso a la plataforma: [https://caja.clancig.com.ar](https://caja.clancig.com.ar)
 
-- [Node.js](https://nodejs.org/en/) (versión 18 o superior)
-- [Git](https://git-scm.com/)
-- Una cuenta de [Google](https://google.com) para configurar Firebase.
-- Una cuenta de [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (puedes empezar con una capa gratuita).
+---
 
-### 1. Clonar el Repositorio
+## Instrucciones de Instalacion y Ejecucion Local
 
-Abre tu terminal y clona este repositorio en tu máquina local:
+Las siguientes directivas permitiran instanciar un ambiente de desarrollo consistente con el entorno de produccion.
+
+### Dependencias Previas
+
+- Entorno de ejecucion Node.js (v18 o superior)
+- Sistema de control de versiones Git
+- Cuenta de Google Cloud Platform habilitada para el aprovisionamiento de credenciales OAuth 2.0
+- Acceso a un cluster de MongoDB Atlas (o instancia local)
+
+### 1. Obtencion del Codigo Fuente
+
+Ejecutar en linea de comandos para descargar la base de codigo:
 
 ```bash
 git clone https://github.com/damianclancig/financlan.git
 cd financlan
 ```
 
-### 2. Instalar Dependencias
+### 2. Instalacion de Modulos
 
-Instala todas las dependencias del proyecto usando npm:
+Procesar el arbol de dependencias mediante el gestor predeterminado:
 
 ```bash
 npm install
 ```
 
-### 3. Configuración de Variables de Entorno
+### 3. Configuracion de Variables de Entorno
 
-La aplicación necesita credenciales para conectarse a Firebase y MongoDB.
+Copiar el archivo base de variables y parametrizar los secretos de los servicios dependientes. Consultar el archivo `.env.local.example` para revisar todas las identificaciones requeridas. Se debera crear un archivo de nombre `.env.local` en la raiz del arbol de directorios definiendo las siguientes agrupaciones de configuraciones:
 
-1.  Crea un archivo llamado `.env.local` en la raíz del proyecto.
-2.  Este archivo contendrá todas las claves de API necesarias.
+a. Parametrizacion de Auth.js
+La base de URLs, referencias de seguridad provistas y credenciales OAuth facilitadas por el ecosistema de Google.
 
-#### a. Configuración de Firebase (para Autenticación)
+b. Acceso a MongoDB
+La cadena de conexion y el identificador de la coleccion y base de datos para la instanciacion correcta.
 
-1.  Ve a la [Consola de Firebase](https://console.firebase.google.com/) y crea un nuevo proyecto.
-2.  Dentro de tu proyecto, ve a **Authentication** en el menú de la izquierda.
-3.  En la pestaña **Sign-in method**, habilita el proveedor **Google**.
-4.  Ve a **Project settings** (el icono de engranaje) -> **General**.
-5.  En la sección "Your apps", registra una nueva **Web app** (icono `</>`).
-6.  Después de registrarla, Firebase te proporcionará un objeto `firebaseConfig`. Copia estos valores.
-7.  Pega las claves en tu archivo `.env.local`:
+c. Configuracion General y Referencias de Navegacion
+Las URLs necesarias que conforman la metadata de la plataforma y direccionamiento estandar.
 
-```
-# URL principal de la aplicación (usada en metadatos y dialog de soporte)
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
+d. Telegram Bot Integration (Opcional)
+En caso de habilitar la funcion de procesamiento de texto estructurado y flujos vinculados al bot conversacional de Telegram, se ingresaran tokens definidos en el entorno perimetral en uso de BotFather y una llave de registro de modelo Gemini LLM.
 
-# Credenciales de Firebase
-NEXT_PUBLIC_FIREBASE_API_KEY="TU_API_KEY"
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="TU_AUTH_DOMAIN"
-NEXT_PUBLIC_FIREBASE_PROJECT_ID="TU_PROJECT_ID"
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="TU_STORAGE_BUCKET"
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="TU_MESSAGING_SENDER_ID"
-NEXT_PUBLIC_FIREBASE_APP_ID="TU_APP_ID"
-```
+### 4. Inicializacion del Entorno Local
 
-8.  **¡Importante!** Vuelve a **Authentication** -> **Settings** -> **Authorized domains** y asegúrate de que el dominio desde donde ejecutarás la aplicación esté en la lista. Para desarrollo local, añade `localhost`. Si usas un servicio en la nube como Firebase Studio, añade la URL específica que te proporciona.
-
-#### b. Configuración de MongoDB (para la Base de Datos)
-
-1.  Ve a tu cuenta de [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) y crea un nuevo clúster (el nivel gratuito `M0` es suficiente).
-2.  Una vez que el clúster esté desplegado, ve a **Database Access** y crea un usuario de base de datos. Anota el nombre de usuario y la contraseña.
-3.  Ve a **Network Access** y añade tu dirección IP actual a la lista de acceso (o permite el acceso desde cualquier lugar `0.0.0.0/0` solo para fines de desarrollo).
-4.  Ve a **Database**, haz clic en **Connect** en tu clúster y selecciona **Drivers**.
-5.  Copia la **cadena de conexión (URI)** proporcionada.
-6.  Pégala en tu archivo `.env.local`. **Recuerda reemplazar `<password>` con la contraseña del usuario que creaste.**
-
-```
-# Credenciales de MongoDB
-MONGODB_URI="mongodb+srv://tu_usuario:<password>@tu_cluster.mongodb.net/?retryWrites=true&w=majority"
-MONGODB_DB="ledger_lite"
-```
-
-#### c. Configuración de Soporte y Enlaces Personales
-
-Estos valores se utilizan en el diálogo de soporte en el pie de página.
-
-```
-# Enlaces para el diálogo de soporte
-NEXT_PUBLIC_CAFECITO_USER="tu_usuario_de_cafecito"
-NEXT_PUBLIC_PORTFOLIO_URL="https://tu_portfolio.com"
-NEXT_PUBLIC_GITHUB_REPO_URL="https://github.com/tu_usuario/tu_repositorio"
-NEXT_PUBLIC_PAYPAL_URL="https://paypal.me/tuUsuario"
-```
-
-### 4. Ejecutar la Aplicación
-
-Una vez que hayas configurado todas las variables de entorno, puedes iniciar el servidor de desarrollo:
+Ejecutar el comando provisto por los scripts NPM para levantar el servidor emulador:
 
 ```bash
 npm run dev
 ```
 
-Abre tu navegador y visita [http://localhost:3000](http://localhost:3000) (o el puerto que se indique en la terminal). ¡Ya deberías poder ver la página de inicio de sesión y empezar a usar FinanClan!
+La plataforma generara una ejecucion emitiendo respuestas por peticiones servidas e integrando Hot Reload en el puerto local de Next.js (predeterminado generalmente a `:3000` o `:9003`).
+
+---
+Sistema desarrollado priorizando legibilidad, aislamiento y arquitectura escalable bajo principios DRY/SRP.

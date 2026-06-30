@@ -15,6 +15,7 @@ coverage
 
 # misc
 .DS_Store
+.directory
 *.pem
 
 # debug
@@ -36,3 +37,10 @@ next-env.d.ts
 # logs
 *.log
 *.txt
+
+# IDEs
+.vscode/
+.idx/
+.idea/
+*.suo
+*.ntvs*
