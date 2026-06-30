@@ -37,3 +37,10 @@ next-env.d.ts
 # logs
 *.log
 *.txt
+
+# IDEs
+.vscode/
+.idx/
+.idea/
+*.suo
+*.ntvs*
