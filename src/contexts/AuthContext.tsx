@@ -26,7 +26,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { translations } = useTranslations();
   
-  const loading = status === "loading" || isSyncing;
+  const loading = status === "loading" || (isSyncing && !dbUser);
 
   useEffect(() => {
     const fetchDbUser = async () => {
@@ -83,7 +83,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
-    <SessionProvider>
+    <SessionProvider refetchOnWindowFocus={false}>
       <AuthProviderInner>{children}</AuthProviderInner>
     </SessionProvider>
   );
