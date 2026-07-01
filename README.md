@@ -98,5 +98,12 @@ npm run dev
 
 La plataforma generara una ejecucion emitiendo respuestas por peticiones servidas e integrando Hot Reload en el puerto local de Next.js (predeterminado generalmente a `:3000` o `:9003`).
 
+## Licencia
+
+Este proyecto está licenciado bajo la **Apache License 2.0**. Consulta el archivo [LICENSE](file:///home/dclancig/DEV/FinanClan/LICENSE) para ver los detalles.
+
+© 2026 Clancig FullstackWeb.
+
 ---
 Sistema desarrollado priorizando legibilidad, aislamiento y arquitectura escalable bajo principios DRY/SRP.
+
