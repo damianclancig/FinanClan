@@ -21,10 +21,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // @ts-expect-error NextJS 16 Types Issue
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+
   images: {
     minimumCacheTTL: 60 * 60 * 24 * 365, // 1 year
     remotePatterns: [
