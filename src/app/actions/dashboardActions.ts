@@ -21,7 +21,7 @@ import { getCategories } from './categoryActions';
 import { getPaymentMethods } from './paymentMethodActions';
 import { getSavingsFunds } from './savingsFundActions';
 import { getCurrentBillingCycle, getBillingCycles } from './billingCycleActions';
-import { endOfMonth, isPast, differenceInDays, startOfDay, format, startOfToday, subDays } from 'date-fns';
+import { endOfMonth, isPast, differenceInDays, startOfDay, format, startOfToday, subDays, addMonths } from 'date-fns';
 import type { Transaction, BudgetInsights, BillingCycle, InstallmentProjection } from '@/types';
 import { getDb } from '@/lib/actions-helpers';
 import { validateUserId } from '@/lib/validation-helpers';
@@ -206,12 +206,15 @@ const calculateCycleBudgetInsights = (transactions: Transaction[], currentCycle:
       cycleWeeklyAverage = cycleDailyAverage * 7;
     } else {
       isHistoric = false;
-      const endOfCurrentMonth = endOfMonth(now);
-      const daysLeft = Math.max(1, differenceInDays(endOfCurrentMonth, now));
+      // Proyectar el fin de ciclo sumando 1 mes a la fecha de inicio del ciclo, normalizado al inicio del día
+      const cycleStartNormalized = startOfDay(new Date(currentCycle.startDate));
+      const projectedCycleEnd = addMonths(cycleStartNormalized, 1);
+      const daysLeft = Math.max(1, differenceInDays(projectedCycleEnd, startOfDay(now)));
 
       if (balance > 0) {
         dailyBudget = balance / daysLeft;
-        weeklyBudget = dailyBudget * 7;
+        // El presupuesto semanal disponible no puede ser mayor que el balance real disponible para este ciclo
+        weeklyBudget = Math.min(balance, dailyBudget * 7);
       }
     }
   }
