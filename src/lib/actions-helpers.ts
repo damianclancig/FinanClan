@@ -68,7 +68,11 @@ export function mapMongoDocumentTax(doc: WithId<Document>): Tax {
 }
 
 export function mapMongoDocumentCategory(doc: WithId<Document>): Category {
-  return mapBaseDocument<Category>(doc);
+  const mapped = mapBaseDocument<Category>(doc);
+  if (mapped.includeInDailyExpenses === undefined) {
+    mapped.includeInDailyExpenses = !mapped.isSystem;
+  }
+  return mapped;
 }
 
 export function mapMongoDocumentPaymentMethod(doc: WithId<Document>): PaymentMethod {

@@ -379,5 +379,9 @@
   "withdrawFrom": "Retirar de {fundName}",
   "year": "Año",
   "yearRequired": "El año es obligatorio.",
-  "yesterday": "Ayer"
+  "yesterday": "Ayer",
+  "includeInDailyExpenses": "Incluir en Gastos Diarios",
+  "includeInDailyExpensesDescription": "Los gastos de esta categoría se sumarán al cálculo y gráfico de gastos diarios.",
+  "isExtraordinary": "Gasto extraordinario",
+  "isExtraordinaryDescription": "Excluir este gasto del cálculo y gráfico de gastos diarios."
 }

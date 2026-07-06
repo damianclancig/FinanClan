@@ -70,6 +70,7 @@ export interface Category {
   icon?: string; // Lucide icon name (e.g., "Home", "Car")
   isEnabled: boolean;
   isSystem: boolean;
+  includeInDailyExpenses: boolean;
 }
 
 export type CategoryFormValues = Omit<Category, "id" | "userId" | "isSystem">;
@@ -92,6 +93,7 @@ export interface Transaction {
   cardId?: string;
   isPaid?: boolean;
   isSummaryPayment?: boolean;
+  isExtraordinary?: boolean;
 }
 
 export type TransactionFormValues = Omit<Transaction, "id" | "userId" | "groupId" | "billingCycleId" | "date" | "isCardPayment" | "cardId" | "isPaid" | "isSummaryPayment"> & {
@@ -244,6 +246,10 @@ export interface Translations {
   // Category translations
   Taxes: string;
   Savings: string;
+  includeInDailyExpenses: string;
+  includeInDailyExpensesDescription: string;
+  isExtraordinary: string;
+  isExtraordinaryDescription: string;
   // Payment Type translations
   Cash: string;
   CreditCard: string;

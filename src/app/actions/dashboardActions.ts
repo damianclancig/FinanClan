@@ -21,7 +21,7 @@ import { getCategories } from './categoryActions';
 import { getPaymentMethods } from './paymentMethodActions';
 import { getSavingsFunds } from './savingsFundActions';
 import { getCurrentBillingCycle, getBillingCycles } from './billingCycleActions';
-import { endOfMonth, isPast, differenceInDays, startOfDay, format, startOfToday, subDays } from 'date-fns';
+import { endOfMonth, isPast, differenceInDays, startOfDay, format, startOfToday, subDays, addMonths } from 'date-fns';
 import type { Transaction, BudgetInsights, BillingCycle, InstallmentProjection } from '@/types';
 import { getDb } from '@/lib/actions-helpers';
 import { validateUserId } from '@/lib/validation-helpers';
@@ -39,15 +39,55 @@ export async function getBudgetInsights(
     const twentyEightDaysAgoStart = subDays(startOfToday(), 27);
 
     // Fetch expenses for the last 28 days to calculate both 7-day and 28-day metrics
-    const last28DaysExpenses = await transactionsCollection.find({
-      userId,
-      type: 'expense',
-      isCardPayment: { $ne: true }, // Exclude unpaid card expenses
-      date: {
-        $gte: twentyEightDaysAgoStart,
-        $lte: endDate
+    // Perform lookup with categories to respect includeInDailyExpenses setting and exclude extraordinary expenses
+    const last28DaysExpenses = await transactionsCollection.aggregate([
+      {
+        $match: {
+          userId,
+          type: 'expense',
+          isCardPayment: { $ne: true }, // Exclude unpaid card expenses
+          isExtraordinary: { $ne: true }, // Exclude extraordinary transactions
+          date: {
+            $gte: twentyEightDaysAgoStart,
+            $lte: endDate
+          }
+        }
+      },
+      {
+        $addFields: {
+          categoryIdObj: { $toObjectId: '$categoryId' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'categoryIdObj',
+          foreignField: '_id',
+          as: 'categoryInfo'
+        }
+      },
+      {
+        $unwind: {
+          path: '$categoryInfo',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $match: {
+          $or: [
+            { 'categoryInfo.includeInDailyExpenses': { $ne: false } },
+            { 'categoryInfo': { $exists: false } }
+          ]
+        }
+      },
+      {
+        $project: {
+          date: 1,
+          amount: 1,
+          _id: 0
+        }
       }
-    }, { projection: { date: 1, amount: 1, _id: 0 } }).toArray();
+    ]).toArray() as unknown as { date: Date; amount: number }[];
 
     // Calculate 28-day average
     const totalExpenses28Days = last28DaysExpenses.reduce((sum, t) => sum + t.amount, 0);
@@ -166,12 +206,15 @@ const calculateCycleBudgetInsights = (transactions: Transaction[], currentCycle:
       cycleWeeklyAverage = cycleDailyAverage * 7;
     } else {
       isHistoric = false;
-      const endOfCurrentMonth = endOfMonth(now);
-      const daysLeft = Math.max(1, differenceInDays(endOfCurrentMonth, now));
+      // Proyectar el fin de ciclo sumando 1 mes a la fecha de inicio del ciclo, normalizado al inicio del día
+      const cycleStartNormalized = startOfDay(new Date(currentCycle.startDate));
+      const projectedCycleEnd = addMonths(cycleStartNormalized, 1);
+      const daysLeft = Math.max(1, differenceInDays(projectedCycleEnd, startOfDay(now)));
 
       if (balance > 0) {
         dailyBudget = balance / daysLeft;
-        weeklyBudget = dailyBudget * 7;
+        // El presupuesto semanal disponible no puede ser mayor que el balance real disponible para este ciclo
+        weeklyBudget = Math.min(balance, dailyBudget * 7);
       }
     }
   }

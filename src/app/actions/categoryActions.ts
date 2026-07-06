@@ -35,6 +35,7 @@ async function seedDefaultCategories(userId: string) {
     isEnabled: true,
     isSystem: cat.isSystem,
     icon: DEFAULT_CATEGORY_ICONS[cat.key], // Assign default icon if available
+    includeInDailyExpenses: !cat.isSystem, // system categories are false, others true
   }));
   await categoriesCollection.insertMany(defaultCategories);
 }
@@ -57,10 +58,17 @@ async function runCategoryMigrations(userId: string, categoriesCollection: Colle
     const existingCategory = await categoriesCollection.findOne({ userId, name: sysCatKey });
 
     if (existingCategory) {
+      const updateData: any = {};
       if (existingCategory.isSystem !== true) {
+        updateData.isSystem = true;
+      }
+      if (existingCategory.includeInDailyExpenses !== false) {
+        updateData.includeInDailyExpenses = false;
+      }
+      if (Object.keys(updateData).length > 0) {
         await categoriesCollection.updateOne(
           { _id: existingCategory._id },
-          { $set: { isSystem: true } }
+          { $set: updateData }
         );
       }
     } else {
@@ -70,6 +78,7 @@ async function runCategoryMigrations(userId: string, categoriesCollection: Colle
         isEnabled: true,
         isSystem: true,
         icon: DEFAULT_CATEGORY_ICONS[sysCatDef.key], // Assign default icon
+        includeInDailyExpenses: false, // system categories are false by default
       });
     }
   }
@@ -89,6 +98,18 @@ async function runCategoryMigrations(userId: string, categoriesCollection: Colle
   await categoriesCollection.updateMany(
     { userId, name: { $nin: systemCategoryKeys }, isSystem: { $ne: false } },
     { $set: { isSystem: false } }
+  );
+
+  // Set includeInDailyExpenses: true for existing user-defined categories that don't have it
+  await categoriesCollection.updateMany(
+    { userId, isSystem: { $ne: true }, includeInDailyExpenses: { $exists: false } },
+    { $set: { includeInDailyExpenses: true } }
+  );
+
+  // Set includeInDailyExpenses: false for existing system categories that don't have it
+  await categoriesCollection.updateMany(
+    { userId, isSystem: true, includeInDailyExpenses: { $exists: false } },
+    { $set: { includeInDailyExpenses: false } }
   );
 }
 

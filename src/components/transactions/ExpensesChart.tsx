@@ -58,7 +58,7 @@ export function ExpensesChart({ expensesByCategory }: ExpensesChartProps) {
   const chartData = React.useMemo(() => {
     return expensesByCategory
       .map((item) => ({
-        category: translateCategory({ id: item.categoryId, name: item.name, isSystem: item.isSystem, isEnabled: true, userId: '' }),
+        category: translateCategory({ id: item.categoryId, name: item.name, isSystem: item.isSystem, isEnabled: true, userId: '', includeInDailyExpenses: !item.isSystem }),
         amount: item.total,
         icon: item.icon,
         fill: COLORS[Math.floor(Math.random() * COLORS.length)]

@@ -379,5 +379,9 @@
   "withdrawFrom": "Withdraw from {fundName}",
   "year": "Year",
   "yearRequired": "Year is required",
-  "yesterday": "Yesterday"
+  "yesterday": "Yesterday",
+  "includeInDailyExpenses": "Include in Daily Expenses",
+  "includeInDailyExpensesDescription": "Expenses in this category will be included in the daily expenses calculation and chart.",
+  "isExtraordinary": "Extraordinary expense",
+  "isExtraordinaryDescription": "Exclude this expense from the daily expenses calculation and chart."
 }
