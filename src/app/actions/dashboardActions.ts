@@ -178,15 +178,19 @@ async function getExpensesByCategory(
   }
 }
 
-const calculateCycleBudgetInsights = (transactions: Transaction[], currentCycle: BillingCycle | null): Pick<BudgetInsights, 'totalIncome' | 'totalExpenses' | 'balance' | 'weeklyBudget' | 'dailyBudget' | 'isHistoric' | 'cycleDailyAverage' | 'cycleWeeklyAverage' | 'previousCycleIncome' | 'previousCycleExpenses'> => {
+const calculateCycleBudgetInsights = (transactions: Transaction[], currentCycle: BillingCycle | null): Pick<BudgetInsights, 'totalIncome' | 'totalExpenses' | 'balance' | 'savingsNet' | 'pocketBalance' | 'weeklyBudget' | 'dailyBudget' | 'isHistoric' | 'cycleDailyAverage' | 'cycleWeeklyAverage' | 'previousCycleIncome' | 'previousCycleExpenses'> => {
   const now = new Date();
 
-  const relevantTransactions = transactions.filter(t => t.type === 'income' || t.type === 'expense');
-
-  const income = relevantTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+  const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
   // Exclude credit card purchases from expenses (they're counted when the summary is paid)
-  const expenses = relevantTransactions.filter(t => t.type === 'expense' && t.isCardPayment !== true).reduce((sum, t) => sum + t.amount, 0);
+  const expenses = transactions.filter(t => t.type === 'expense' && t.isCardPayment !== true).reduce((sum, t) => sum + t.amount, 0);
   const balance = income - expenses;
+
+  // Calculate savings transactions
+  const savingsDeposits = transactions.filter(t => t.type === 'deposit').reduce((sum, t) => sum + t.amount, 0);
+  const savingsWithdrawals = transactions.filter(t => t.type === 'withdrawal').reduce((sum, t) => sum + t.amount, 0);
+  const savingsNet = savingsDeposits - savingsWithdrawals;
+  const pocketBalance = balance - savingsNet;
 
   let weeklyBudget = 0;
   let dailyBudget = 0;
@@ -211,10 +215,10 @@ const calculateCycleBudgetInsights = (transactions: Transaction[], currentCycle:
       const projectedCycleEnd = addMonths(cycleStartNormalized, 1);
       const daysLeft = Math.max(1, differenceInDays(projectedCycleEnd, startOfDay(now)));
 
-      if (balance > 0) {
-        dailyBudget = balance / daysLeft;
+      if (pocketBalance > 0) {
+        dailyBudget = pocketBalance / daysLeft;
         // El presupuesto semanal disponible no puede ser mayor que el balance real disponible para este ciclo
-        weeklyBudget = Math.min(balance, dailyBudget * 7);
+        weeklyBudget = Math.min(pocketBalance, dailyBudget * 7);
       }
     }
   }
@@ -223,6 +227,8 @@ const calculateCycleBudgetInsights = (transactions: Transaction[], currentCycle:
     totalIncome: income,
     totalExpenses: expenses,
     balance,
+    savingsNet,
+    pocketBalance,
     weeklyBudget,
     dailyBudget,
     isHistoric,

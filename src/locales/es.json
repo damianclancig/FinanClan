@@ -383,5 +383,8 @@
   "includeInDailyExpenses": "Incluir en Gastos Diarios",
   "includeInDailyExpensesDescription": "Los gastos de esta categoría se sumarán al cálculo y gráfico de gastos diarios.",
   "isExtraordinary": "Gasto extraordinario",
-  "isExtraordinaryDescription": "Excluir este gasto del cálculo y gráfico de gastos diarios."
+  "isExtraordinaryDescription": "Excluir este gasto del cálculo y gráfico de gastos diarios.",
+  "savingsNet": "Destinado a Ahorros",
+  "pocketBalance": "Disponible en Bolsillo",
+  "cycleBalance": "Balance del Ciclo"
 }

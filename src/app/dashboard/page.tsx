@@ -328,6 +328,8 @@ export default function DashboardPage() {
           totalIncome={budgetInsights?.totalIncome || 0}
           totalExpenses={budgetInsights?.totalExpenses || 0}
           balance={budgetInsights?.balance || 0}
+          savingsNet={budgetInsights?.savingsNet || 0}
+          pocketBalance={budgetInsights?.pocketBalance}
           onSetSelectedType={updateSelectedType}
         />
 

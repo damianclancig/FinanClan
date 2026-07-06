@@ -621,6 +621,8 @@ export interface BudgetInsights {
   totalIncome: number;
   totalExpenses: number;
   balance: number;
+  savingsNet?: number;
+  pocketBalance?: number;
   previousCycleIncome: number;
   previousCycleExpenses: number;
 }
