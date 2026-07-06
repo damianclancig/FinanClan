@@ -27,6 +27,7 @@ export const getTransactionFormSchema = (translations: Translations) => z.object
   type: z.union([z.enum(["income", "expense"]), z.undefined()]),
   paymentMethodId: z.string({ message: translations.paymentMethodRequired }),
   installments: z.number().min(1).max(120).optional(),
+  isExtraordinary: z.boolean().optional(),
 });
 
 export type TransactionFormSchemaType = z.infer<ReturnType<typeof getTransactionFormSchema>>;

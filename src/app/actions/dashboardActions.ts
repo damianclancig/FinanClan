@@ -39,15 +39,55 @@ export async function getBudgetInsights(
     const twentyEightDaysAgoStart = subDays(startOfToday(), 27);
 
     // Fetch expenses for the last 28 days to calculate both 7-day and 28-day metrics
-    const last28DaysExpenses = await transactionsCollection.find({
-      userId,
-      type: 'expense',
-      isCardPayment: { $ne: true }, // Exclude unpaid card expenses
-      date: {
-        $gte: twentyEightDaysAgoStart,
-        $lte: endDate
+    // Perform lookup with categories to respect includeInDailyExpenses setting and exclude extraordinary expenses
+    const last28DaysExpenses = await transactionsCollection.aggregate([
+      {
+        $match: {
+          userId,
+          type: 'expense',
+          isCardPayment: { $ne: true }, // Exclude unpaid card expenses
+          isExtraordinary: { $ne: true }, // Exclude extraordinary transactions
+          date: {
+            $gte: twentyEightDaysAgoStart,
+            $lte: endDate
+          }
+        }
+      },
+      {
+        $addFields: {
+          categoryIdObj: { $toObjectId: '$categoryId' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'categoryIdObj',
+          foreignField: '_id',
+          as: 'categoryInfo'
+        }
+      },
+      {
+        $unwind: {
+          path: '$categoryInfo',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $match: {
+          $or: [
+            { 'categoryInfo.includeInDailyExpenses': { $ne: false } },
+            { 'categoryInfo': { $exists: false } }
+          ]
+        }
+      },
+      {
+        $project: {
+          date: 1,
+          amount: 1,
+          _id: 0
+        }
       }
-    }, { projection: { date: 1, amount: 1, _id: 0 } }).toArray();
+    ]).toArray() as unknown as { date: Date; amount: number }[];
 
     // Calculate 28-day average
     const totalExpenses28Days = last28DaysExpenses.reduce((sum, t) => sum + t.amount, 0);

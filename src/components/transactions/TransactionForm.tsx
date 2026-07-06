@@ -50,6 +50,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 
 import { cn, getDateLocale } from "@/lib/utils";
 import { getCategoryIcon } from "@/lib/icon-utils";
@@ -83,6 +84,13 @@ export function TransactionForm(props: TransactionFormProps) {
     isCalendarOpen, setCalendarOpen, displayAmount, 
     showInstallments, installments, isManualInstallments 
   } = states;
+
+  const transactionType = form.watch("type");
+  const selectedCategoryId = form.watch("categoryId");
+  const selectedCategory = categories.find(c => c.id === selectedCategoryId);
+  const showExtraordinaryField = 
+    transactionType === "expense" && 
+    (selectedCategory?.includeInDailyExpenses !== false);
 
   const { 
     handleFormSubmit, handleSaveAndAddAnother, handleAmountChange, 
@@ -300,6 +308,29 @@ export function TransactionForm(props: TransactionFormProps) {
             )}
           />
         </div>
+
+        {showExtraordinaryField && (
+          <FormField
+            control={form.control}
+            name="isExtraordinary"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                <div className="space-y-0.5">
+                  <FormLabel>{translations.isExtraordinary}</FormLabel>
+                  <div className="text-xs text-muted-foreground max-w-[280px]">
+                    {translations.isExtraordinaryDescription}
+                  </div>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        )}
 
         {showInstallments && (
           <div className="space-y-4 rounded-lg border p-4 shadow-sm">

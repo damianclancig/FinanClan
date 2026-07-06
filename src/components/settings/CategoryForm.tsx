@@ -54,6 +54,7 @@ const getFormSchema = (translations: Translations) => z.object({
   name: z.string().min(1, { message: translations.categoryNameRequired }),
   icon: z.string().optional(),
   isEnabled: z.boolean(),
+  includeInDailyExpenses: z.boolean(),
 });
 
 export function CategoryForm({ 
@@ -68,22 +69,27 @@ export function CategoryForm({
   const formSchema = getFormSchema(translations);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  const { icon, ...restInitialData } = initialData || {};
+
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      icon: undefined,
       isEnabled: true,
-      ...initialData,
+      includeInDailyExpenses: true,
+      ...restInitialData,
+      icon: icon || undefined,
     },
   });
 
   useEffect(() => {
+    const { icon, ...restInitialData } = initialData || {};
     form.reset({
       name: "",
-      icon: undefined,
       isEnabled: true,
-      ...initialData,
+      includeInDailyExpenses: true,
+      ...restInitialData,
+      icon: icon || undefined,
     });
   }, [initialData, form]);
 
@@ -163,6 +169,28 @@ export function CategoryForm({
             </FormItem>
           )}
         />
+        {!initialData?.isSystem && (
+          <FormField
+            control={form.control}
+            name="includeInDailyExpenses"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                <div className="space-y-0.5">
+                  <FormLabel>{translations.includeInDailyExpenses}</FormLabel>
+                  <div className="text-xs text-muted-foreground max-w-[280px]">
+                    {translations.includeInDailyExpensesDescription}
+                  </div>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        )}
         <div className="flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={onClose}>
             {translations.cancel}

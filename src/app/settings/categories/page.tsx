@@ -24,7 +24,7 @@ import type { Category } from "@/types";
 import { useTranslations } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { List, Edit, Lock } from "lucide-react";
+import { List, Edit, Lock, Check, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -70,7 +70,7 @@ export default function ManageCategoriesPage() {
 
   const handleToggleEnabled = async (category: Category) => {
     if (!dbUser || category.isSystem) return;
-    const result = await updateCategory(category.id, { name: category.name, icon: category.icon, isEnabled: !category.isEnabled }, translations);
+    const result = await updateCategory(category.id, { name: category.name, icon: category.icon, isEnabled: !category.isEnabled, includeInDailyExpenses: category.includeInDailyExpenses }, translations);
 
     if (result && 'error' in result) {
       toast({ title: translations.errorTitle, description: result.error, variant: "destructive" });
@@ -111,6 +111,14 @@ export default function ManageCategoriesPage() {
         <Card key={category.id} className="shadow-lg border-2 border-primary/20 overflow-hidden">
           <CardContent className="p-4 space-y-3">
             <CategoryNameCell category={category} />
+            <div className="flex items-center justify-between text-sm pt-1">
+              <span className="text-muted-foreground">{translations.includeInDailyExpenses}:</span>
+              {category.includeInDailyExpenses ? (
+                <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+              ) : (
+                <X className="h-5 w-5 text-red-600 dark:text-red-400" />
+              )}
+            </div>
             <Separator />
             <div className="flex items-center justify-between pt-1">
               <div className="w-12 h-6">
@@ -139,6 +147,7 @@ export default function ManageCategoriesPage() {
       <TableHeader>
         <TableRow>
           <TableHead>{translations.categoryName}</TableHead>
+          <TableHead className="text-center">{translations.includeInDailyExpenses}</TableHead>
           <TableHead className="text-center">{translations.categoryStatus}</TableHead>
           <TableHead className="text-right">{translations.actions}</TableHead>
         </TableRow>
@@ -148,6 +157,15 @@ export default function ManageCategoriesPage() {
           <TableRow key={category.id}>
             <TableCell>
               <CategoryNameCell category={category} />
+            </TableCell>
+            <TableCell className="text-center">
+              <div className="inline-flex items-center justify-center h-9 w-9">
+                {category.includeInDailyExpenses ? (
+                  <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+                ) : (
+                  <X className="h-5 w-5 text-red-600 dark:text-red-400" />
+                )}
+              </div>
             </TableCell>
             <TableCell className="text-center">
               {!category.isSystem && (

@@ -58,6 +58,7 @@ export function useTransactionForm({
       type: (initialData?.type === 'income' || initialData?.type === 'expense') ? initialData.type : undefined,
       paymentMethodId: initialData?.paymentMethodId || undefined,
       installments: initialData?.installments || 1,
+      isExtraordinary: initialData?.isExtraordinary || false,
     },
   });
 
@@ -79,6 +80,7 @@ export function useTransactionForm({
       type: (initialData?.type === 'income' || initialData?.type === 'expense') ? initialData.type : undefined,
       paymentMethodId: initialData?.paymentMethodId || undefined,
       installments: initialInstallments,
+      isExtraordinary: initialData?.isExtraordinary || false,
     });
   }, [initialData, form]);
 
