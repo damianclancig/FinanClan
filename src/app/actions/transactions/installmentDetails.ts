@@ -20,6 +20,7 @@ import { getDb, mapMongoDocument, mapMongoDocumentPaymentMethod } from '@/lib/ac
 import { parseInstallmentDescription } from '@/lib/installment-helpers';
 import type { InstallmentDetail, CompletedInstallmentDetail, PaymentMethod, Transaction } from '@/types';
 import { isFuture, isSameMonth, isPast } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { getAuthenticatedUser } from '@/lib/auth-server';
 
 async function getPaymentMethodsForInstallments(): Promise<PaymentMethod[]> {
@@ -40,7 +41,10 @@ export async function getInstallmentDetails(): Promise<{ pendingDetails: Install
   if (!userId) return { pendingDetails: [], completedDetails: [], totalPending: 0, totalForCurrentMonth: 0 };
 
   try {
-    const { transactionsCollection } = await getDb();
+    const { transactionsCollection, usersCollection } = await getDb();
+    const userDoc = await usersCollection.findOne({ _id: userId as any });
+    const timezone = userDoc?.timezone || 'America/Argentina/Buenos_Aires';
+
     const paymentMethods = await getPaymentMethodsForInstallments();
     const paymentMethodMap = new Map(paymentMethods.map(pm => [pm.id, pm]));
 
@@ -68,7 +72,7 @@ export async function getInstallmentDetails(): Promise<{ pendingDetails: Install
     const completedDetails: CompletedInstallmentDetail[] = [];
     let totalPending = 0;
     let totalForCurrentMonth = 0;
-    const now = new Date();
+    const now = toZonedTime(new Date(), timezone);
 
     groupedInstallments.forEach((group) => {
       group.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -85,15 +89,15 @@ export async function getInstallmentDetails(): Promise<{ pendingDetails: Install
       const paymentMethodName = paymentMethod ? `${paymentMethod.name} ${paymentMethod.bank ? `(${paymentMethod.bank})` : ''}`.trim() : 'Unknown';
 
       const pendingInstallments = group.filter(item => {
-        const itemDate = new Date(item.date);
-        return isFuture(itemDate) || isSameMonth(itemDate, now);
+        const itemDateZoned = toZonedTime(new Date(item.date), timezone);
+        return isFuture(itemDateZoned) || isSameMonth(itemDateZoned, now);
       });
 
       if (pendingInstallments.length > 0) {
         const pendingAmount = pendingInstallments.reduce((sum, item) => sum + item.amount, 0);
         totalPending += pendingAmount;
 
-        const currentMonthInstallment = pendingInstallments.find(item => isSameMonth(new Date(item.date), now));
+        const currentMonthInstallment = pendingInstallments.find(item => isSameMonth(toZonedTime(new Date(item.date), timezone), now));
         if (currentMonthInstallment) {
           totalForCurrentMonth += currentMonthInstallment.amount;
         }
@@ -111,7 +115,7 @@ export async function getInstallmentDetails(): Promise<{ pendingDetails: Install
           lastInstallmentDate: lastInstallment.date,
         });
       } else {
-        if (isPast(new Date(lastInstallment.date))) {
+        if (isPast(toZonedTime(new Date(lastInstallment.date), timezone))) {
           completedDetails.push({
             id: firstInstallment.id,
             description: baseDescription,

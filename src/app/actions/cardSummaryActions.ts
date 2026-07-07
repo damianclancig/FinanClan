@@ -20,6 +20,7 @@ import { getDb, mapMongoDocument, mapMongoDocumentPaymentMethod } from '@/lib/ac
 import type { CardSummary, PaymentMethod, PaidSummary } from '@/types';
 import { ObjectId } from 'mongodb';
 import { subMonths, setDate, startOfDay, endOfDay, isAfter } from 'date-fns';
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 import { validateUserId } from '@/lib/validation-helpers';
 import { handleActionError, type ErrorResponse } from '@/lib/error-helpers';
 import { revalidateUserTags, CacheTag } from '@/lib/cache-helpers';
@@ -29,7 +30,10 @@ export async function getCardSummaries(): Promise<{ pendingSummaries: CardSummar
   try {
     const { id: userId } = await getAuthenticatedUser();
 
-    const { transactionsCollection, paymentMethodsCollection } = await getDb();
+    const { transactionsCollection, paymentMethodsCollection, usersCollection } = await getDb();
+
+    const userDoc = await usersCollection.findOne({ _id: userId as any });
+    const timezone = userDoc?.timezone || 'America/Argentina/Buenos_Aires';
 
     const creditCards: PaymentMethod[] = (
       await paymentMethodsCollection.find({ userId, type: 'Credit Card' }).toArray()
@@ -38,6 +42,7 @@ export async function getCardSummaries(): Promise<{ pendingSummaries: CardSummar
     const pendingSummaries: CardSummary[] = [];
     if (creditCards.length > 0) {
       const now = new Date();
+      const nowZoned = toZonedTime(now, timezone);
 
       for (const card of creditCards) {
         let startDate: Date;
@@ -46,17 +51,23 @@ export async function getCardSummaries(): Promise<{ pendingSummaries: CardSummar
         if (card.closingDay) {
           const closingDay = card.closingDay;
 
-          endDate = setDate(now, closingDay);
-          endDate = endOfDay(endDate);
+          let endDateZoned = setDate(nowZoned, closingDay);
+          endDateZoned = endOfDay(endDateZoned);
 
-          if (isAfter(now, endDate)) {
-            startDate = setDate(now, closingDay + 1);
-            startDate = startOfDay(startDate);
-            endDate = setDate(subMonths(now, -1), closingDay);
-            endDate = endOfDay(endDate);
+          if (isAfter(nowZoned, endDateZoned)) {
+            let startDateZoned = setDate(nowZoned, closingDay + 1);
+            startDateZoned = startOfDay(startDateZoned);
+            let nextMonthEndDateZoned = setDate(subMonths(nowZoned, -1), closingDay);
+            nextMonthEndDateZoned = endOfDay(nextMonthEndDateZoned);
+
+            startDate = fromZonedTime(startDateZoned, timezone);
+            endDate = fromZonedTime(nextMonthEndDateZoned, timezone);
           } else {
-            startDate = setDate(subMonths(now, 1), closingDay + 1);
-            startDate = startOfDay(startDate);
+            let startDateZoned = setDate(subMonths(nowZoned, 1), closingDay + 1);
+            startDateZoned = startOfDay(startDateZoned);
+
+            startDate = fromZonedTime(startDateZoned, timezone);
+            endDate = fromZonedTime(endDateZoned, timezone);
           }
         } else {
           endDate = now;
@@ -87,7 +98,7 @@ export async function getCardSummaries(): Promise<{ pendingSummaries: CardSummar
     }
 
     // Fetch paid summaries
-    const sixMonthsAgo = subMonths(new Date(), 6);
+    const sixMonthsAgo = fromZonedTime(subMonths(nowZoned, 6), timezone);
     const paidSummaryPayments = await transactionsCollection.find({
       userId,
       isSummaryPayment: true,

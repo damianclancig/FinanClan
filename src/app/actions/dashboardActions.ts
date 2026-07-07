@@ -21,7 +21,8 @@ import { getCategories } from './categoryActions';
 import { getPaymentMethods } from './paymentMethodActions';
 import { getSavingsFunds } from './savingsFundActions';
 import { getCurrentBillingCycle, getBillingCycles } from './billingCycleActions';
-import { endOfMonth, isPast, differenceInDays, startOfDay, format, startOfToday, subDays, addMonths } from 'date-fns';
+import { endOfMonth, isPast, differenceInDays, startOfDay, format, startOfToday, subDays, addMonths, endOfDay } from 'date-fns';
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 import type { Transaction, BudgetInsights, BillingCycle, InstallmentProjection } from '@/types';
 import { getDb } from '@/lib/actions-helpers';
 import { validateUserId } from '@/lib/validation-helpers';
@@ -31,12 +32,14 @@ import { getAuthenticatedUser } from '@/lib/auth-server';
 
 export async function getBudgetInsights(
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  timezone: string
 ): Promise<Pick<BudgetInsights, 'dailyAverage7Days' | 'weeklyExpensesTotal' | 'weeklyAverage28Days' | 'dailyExpenses'> | ErrorResponse> {
   try {
     const { id: userId } = await getAuthenticatedUser();
     const { transactionsCollection } = await getDb();
-    const twentyEightDaysAgoStart = subDays(startOfToday(), 27);
+    const nowZoned = toZonedTime(new Date(), timezone);
+    const twentyEightDaysAgoStart = fromZonedTime(startOfDay(subDays(nowZoned, 27)), timezone);
 
     // Fetch expenses for the last 28 days to calculate both 7-day and 28-day metrics
     // Perform lookup with categories to respect includeInDailyExpenses setting and exclude extraordinary expenses
@@ -178,7 +181,7 @@ async function getExpensesByCategory(
   }
 }
 
-const calculateCycleBudgetInsights = (transactions: Transaction[], currentCycle: BillingCycle | null): Pick<BudgetInsights, 'totalIncome' | 'totalExpenses' | 'balance' | 'savingsNet' | 'pocketBalance' | 'weeklyBudget' | 'dailyBudget' | 'isHistoric' | 'cycleDailyAverage' | 'cycleWeeklyAverage' | 'previousCycleIncome' | 'previousCycleExpenses'> => {
+const calculateCycleBudgetInsights = (transactions: Transaction[], currentCycle: BillingCycle | null, timezone: string): Pick<BudgetInsights, 'totalIncome' | 'totalExpenses' | 'balance' | 'savingsNet' | 'pocketBalance' | 'weeklyBudget' | 'dailyBudget' | 'isHistoric' | 'cycleDailyAverage' | 'cycleWeeklyAverage' | 'previousCycleIncome' | 'previousCycleExpenses'> => {
   const now = new Date();
 
   const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
@@ -200,6 +203,8 @@ const calculateCycleBudgetInsights = (transactions: Transaction[], currentCycle:
 
   if (currentCycle && currentCycle.id !== 'all') {
     const cycleStart = new Date(currentCycle.startDate);
+    const nowZoned = toZonedTime(now, timezone);
+    const startOfTodayZoned = startOfDay(nowZoned);
 
     if (currentCycle.endDate && isPast(new Date(currentCycle.endDate))) {
       isHistoric = true;
@@ -210,10 +215,11 @@ const calculateCycleBudgetInsights = (transactions: Transaction[], currentCycle:
       cycleWeeklyAverage = cycleDailyAverage * 7;
     } else {
       isHistoric = false;
-      // Proyectar el fin de ciclo sumando 1 mes a la fecha de inicio del ciclo, normalizado al inicio del día
-      const cycleStartNormalized = startOfDay(new Date(currentCycle.startDate));
+      // Proyectar el fin de ciclo sumando 1 mes a la fecha de inicio del ciclo, normalizado al inicio del día en la zona horaria del usuario
+      const cycleStartZoned = toZonedTime(cycleStart, timezone);
+      const cycleStartNormalized = startOfDay(cycleStartZoned);
       const projectedCycleEnd = addMonths(cycleStartNormalized, 1);
-      const daysLeft = Math.max(1, differenceInDays(projectedCycleEnd, startOfDay(now)));
+      const daysLeft = Math.max(1, differenceInDays(projectedCycleEnd, startOfTodayZoned));
 
       if (pocketBalance > 0) {
         dailyBudget = pocketBalance / daysLeft;
@@ -252,16 +258,18 @@ function resolveActiveCycle(
   return billingCycles.find(c => c.id === cycleId) || null;
 }
 
-function getCycleDateRange(activeCycle: BillingCycle | null) {
+function getCycleDateRange(activeCycle: BillingCycle | null, timezone: string) {
   const cycleStartDate = activeCycle ? new Date(activeCycle.startDate) : new Date(0);
   let cycleEndDate: Date;
 
   if (activeCycle?.endDate) {
     cycleEndDate = new Date(activeCycle.endDate);
   } else if (activeCycle?.id === 'all') {
-    cycleEndDate = new Date();
+    const nowZoned = toZonedTime(new Date(), timezone);
+    cycleEndDate = fromZonedTime(endOfDay(nowZoned), timezone);
   } else {
-    cycleEndDate = endOfMonth(new Date());
+    const nowZoned = toZonedTime(new Date(), timezone);
+    cycleEndDate = fromZonedTime(endOfMonth(nowZoned), timezone);
   }
 
   return { cycleStartDate, cycleEndDate };
@@ -289,11 +297,13 @@ async function getPreviousCycleComparison(
 }
 
 export async function getDashboardData(cycleId?: string | null) {
-  const { id: userId } = await getAuthenticatedUser();
+  const user = await getAuthenticatedUser();
+  const userId = user.id;
+  const timezone = user.timezone || 'America/Argentina/Buenos_Aires';
 
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
-  const sevenDaysAgoStart = subDays(startOfToday(), 6);
+  const nowZoned = toZonedTime(new Date(), timezone);
+  const todayEnd = fromZonedTime(endOfDay(nowZoned), timezone);
+  const sevenDaysAgoStart = fromZonedTime(startOfDay(subDays(nowZoned, 6)), timezone);
 
   const [
     paymentMethods,
@@ -309,7 +319,7 @@ export async function getDashboardData(cycleId?: string | null) {
     getCurrentBillingCycle(),
     getBillingCycles(),
     getCategories(),
-    getBudgetInsights(sevenDaysAgoStart, todayEnd),
+    getBudgetInsights(sevenDaysAgoStart, todayEnd, timezone),
     getInstallmentProjections(),
   ]);
 
@@ -318,7 +328,7 @@ export async function getDashboardData(cycleId?: string | null) {
     : weeklyInsightsResult;
 
   const activeCycle = resolveActiveCycle(cycleId, currentCycle, billingCycles, userId);
-  const { cycleStartDate, cycleEndDate } = getCycleDateRange(activeCycle);
+  const { cycleStartDate, cycleEndDate } = getCycleDateRange(activeCycle, timezone);
 
   const [transactionsForCycle, expensesByCategoryResult] = await Promise.all([
     getTransactions({ cycle: activeCycle }),
@@ -327,7 +337,7 @@ export async function getDashboardData(cycleId?: string | null) {
 
   const expensesByCategory = isErrorResponse(expensesByCategoryResult) ? [] : expensesByCategoryResult;
 
-  let budgetInsights = calculateCycleBudgetInsights(transactionsForCycle, activeCycle);
+  let budgetInsights = calculateCycleBudgetInsights(transactionsForCycle, activeCycle, timezone);
 
   if (activeCycle && activeCycle.id !== 'all') {
     const prevComparison = await getPreviousCycleComparison(activeCycle, billingCycles);
