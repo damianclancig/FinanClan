@@ -34,6 +34,8 @@ export async function getCardSummaries(): Promise<{ pendingSummaries: CardSummar
 
     const userDoc = await usersCollection.findOne({ _id: userId as any });
     const timezone = userDoc?.timezone || 'America/Argentina/Buenos_Aires';
+    const now = new Date();
+    const nowZoned = toZonedTime(now, timezone);
 
     const creditCards: PaymentMethod[] = (
       await paymentMethodsCollection.find({ userId, type: 'Credit Card' }).toArray()
@@ -41,8 +43,6 @@ export async function getCardSummaries(): Promise<{ pendingSummaries: CardSummar
 
     const pendingSummaries: CardSummary[] = [];
     if (creditCards.length > 0) {
-      const now = new Date();
-      const nowZoned = toZonedTime(now, timezone);
 
       for (const card of creditCards) {
         let startDate: Date;
