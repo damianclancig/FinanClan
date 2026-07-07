@@ -27,10 +27,12 @@ interface TotalsDisplayProps {
   totalIncome: number;
   totalExpenses: number;
   balance: number;
+  savingsNet?: number;
+  pocketBalance?: number;
   onSetSelectedType: (type: TransactionType | "all") => void;
 }
 
-export function TotalsDisplay({ totalIncome, totalExpenses, balance, onSetSelectedType }: TotalsDisplayProps) {
+export function TotalsDisplay({ totalIncome, totalExpenses, balance, savingsNet = 0, pocketBalance, onSetSelectedType }: TotalsDisplayProps) {
   const { translations } = useTranslations();
 
   const handleFilterClick = (type: TransactionType) => {
@@ -73,14 +75,26 @@ export function TotalsDisplay({ totalIncome, totalExpenses, balance, onSetSelect
       <Card className="shadow-xl border-2 border-primary">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div className="font-medium flex items-center text-xl">
-             <DollarSign className={`h-5 w-5 mr-2 ${balance >= 0 ? 'text-blue-500' : 'text-orange-500'}`} />
-             Balance
+             <DollarSign className={`h-5 w-5 mr-2 ${(pocketBalance ?? balance) >= 0 ? 'text-blue-500' : 'text-orange-500'}`} />
+             {savingsNet !== 0 ? translations.pocketBalance : "Balance"}
           </div>
         </CardHeader>
-        <CardContent>
-          <div className={`text-xl md:text-2xl font-bold text-center ${balance >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'} font-mono`}>
-            {formatCurrency(balance)}
+        <CardContent className="space-y-4">
+          <div className={`text-xl md:text-2xl font-bold text-center ${(pocketBalance ?? balance) >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'} font-mono`}>
+            {formatCurrency(pocketBalance ?? balance)}
           </div>
+          {savingsNet !== 0 && (
+            <div className="pt-2 border-t border-dashed text-xs text-muted-foreground space-y-1 font-mono">
+              <div className="flex justify-between">
+                <span>{translations.cycleBalance}:</span>
+                <span className="font-semibold">{formatCurrency(balance)}</span>
+              </div>
+              <div className="flex justify-between text-orange-600 dark:text-orange-400">
+                <span>{translations.savingsNet}:</span>
+                <span className="font-semibold">-{formatCurrency(savingsNet)}</span>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
