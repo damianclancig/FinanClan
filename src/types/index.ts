@@ -28,6 +28,7 @@ export interface User {
   lastName?: string;
   createdAt: string; // ISO string
   lastLogin: string; // ISO string
+  timezone?: string;
 }
 
 export const CATEGORIES = [

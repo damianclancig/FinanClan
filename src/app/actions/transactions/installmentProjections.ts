@@ -20,6 +20,7 @@ import { getDb } from '@/lib/actions-helpers';
 import { validateUserId } from '@/lib/validation-helpers';
 import type { InstallmentProjection } from '@/types';
 import { addMonths, startOfMonth, endOfMonth, format } from 'date-fns';
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 
 import { getAuthenticatedUser } from '@/lib/auth-server';
 
@@ -27,12 +28,15 @@ export async function getInstallmentProjections(): Promise<InstallmentProjection
   const { id: userId } = await getAuthenticatedUser();
   if (!userId) return [];
   try {
-    const { transactionsCollection } = await getDb();
-    const now = new Date();
+    const { transactionsCollection, usersCollection } = await getDb();
+    const userDoc = await usersCollection.findOne({ _id: userId as any });
+    const timezone = userDoc?.timezone || 'America/Argentina/Buenos_Aires';
+
+    const nowZoned = toZonedTime(new Date(), timezone);
 
     // Calculate range: 6 months back and 6 months forward from current month
-    const rangeStart = startOfMonth(addMonths(now, -6));
-    const rangeEnd = endOfMonth(addMonths(now, 6));
+    const rangeStart = fromZonedTime(startOfMonth(addMonths(nowZoned, -6)), timezone);
+    const rangeEnd = fromZonedTime(endOfMonth(addMonths(nowZoned, 6)), timezone);
 
     const query = {
       userId,
@@ -48,7 +52,7 @@ export async function getInstallmentProjections(): Promise<InstallmentProjection
       { $match: query },
       {
         $group: {
-          _id: { $dateToString: { format: "%Y-%m", date: "$date" } },
+          _id: { $dateToString: { format: "%Y-%m", date: "$date", timezone: timezone } },
           total: { $sum: "$amount" }
         }
       },
@@ -63,7 +67,7 @@ export async function getInstallmentProjections(): Promise<InstallmentProjection
 
     // Generate 12 months: from -6 to +5 months relative to current month
     for (let i = -6; i <= 5; i++) {
-      const monthDate = addMonths(startOfMonth(now), i);
+      const monthDate = addMonths(startOfMonth(nowZoned), i);
       const monthKey = format(monthDate, 'yyyy-MM');
       finalProjection.push({
         month: monthKey,

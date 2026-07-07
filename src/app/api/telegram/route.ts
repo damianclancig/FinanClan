@@ -37,6 +37,7 @@ import {
 import { addInternalTransaction as addTransaction } from '@/app/actions/transactions/transactionCrud';
 import { getInternalCategories as getCategories } from '@/app/actions/categoryActions';
 import { getInternalPaymentMethods as getPaymentMethods } from '@/app/actions/paymentMethodActions';
+import { getDb } from '@/lib/actions-helpers';
 
 /**
  * Telegram Bot Webhook
@@ -407,17 +408,20 @@ async function handleNaturalLanguageMessage(
     text: '🤔 Procesando...',
   });
 
-  // Get user's categories and payment methods FIRST
-  const [categories, methods] = await Promise.all([
+  // Get user's categories, payment methods, and timezone
+  const { usersCollection } = await getDb();
+  const [categories, methods, userDoc] = await Promise.all([
     getCategories(userId),
     getPaymentMethods(userId),
+    usersCollection.findOne({ _id: userId as any }),
   ]);
 
+  const timezone = userDoc?.timezone || 'America/Argentina/Buenos_Aires';
   const enabledCategories = categories.filter(c => c.isEnabled);
   const enabledMethods = methods.filter(m => m.isEnabled);
 
-  // Parse with user's actual data
-  const parsed = await parseTransactionMessage(text, enabledCategories, enabledMethods);
+  // Parse with user's actual data and timezone
+  const parsed = await parseTransactionMessage(text, enabledCategories, enabledMethods, timezone);
 
   if (!parsed || parsed.confidence < 0.3) {
     await sendMessage({

@@ -86,3 +86,21 @@ export async function deleteUserAccount(): Promise<{ success: boolean; error?: s
     return { success: false, error: `Failed to delete account. Reason: ${errorMessage}` };
   }
 }
+
+export async function updateUserTimezone(timezone: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { id: userId } = await getAuthenticatedUser();
+    if (!userId) return { success: false, error: 'Not authenticated' };
+    
+    const { usersCollection } = await getDb();
+    await usersCollection.updateOne(
+      { _id: userId as any },
+      { $set: { timezone } }
+    );
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error('Failed to update user timezone:', error);
+    return { success: false, error: error.message || 'Failed to update timezone' };
+  }
+}

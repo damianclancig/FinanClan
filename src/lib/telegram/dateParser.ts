@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
+import { startOfDay } from 'date-fns';
+
 /**
  * Date Parser for Natural Language Expressions in Spanish (Argentina)
  * Parses date expressions like "hoy", "ayer", "el lunes", "hace 3 días", etc.
@@ -23,19 +26,20 @@
  * Parse a natural language date expression in Spanish
  * @param text - The date expression to parse
  * @param referenceDate - Optional reference date (defaults to now)
+ * @param timezone - User's local timezone
  * @returns Parsed Date object or null if cannot parse
  */
-export function parseDateExpression(text: string, referenceDate?: Date): Date | null {
+export function parseDateExpression(text: string, referenceDate?: Date, timezone?: string): Date | null {
   if (!text) return null;
 
   const normalized = text.toLowerCase().trim();
-  const reference = referenceDate || new Date();
+  const tz = timezone || 'America/Argentina/Buenos_Aires';
+  const reference = referenceDate ? toZonedTime(referenceDate, tz) : toZonedTime(new Date(), tz);
 
   // Set time to 00:00:00 for consistent date comparison
   const getDateAtMidnight = (date: Date): Date => {
-    const result = new Date(date);
-    result.setHours(0, 0, 0, 0);
-    return result;
+    const zonedMidnight = startOfDay(date);
+    return fromZonedTime(zonedMidnight, tz);
   };
 
   // Today

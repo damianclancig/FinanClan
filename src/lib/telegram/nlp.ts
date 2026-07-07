@@ -16,6 +16,7 @@
 
 import type { ParsedTransaction, TransactionType } from '@/types';
 import { parseDateExpression, formatDateForDisplay } from './dateParser';
+import { toZonedTime } from 'date-fns-tz';
 
 const transactionParserPrompt = `Eres un asistente experto en interpretar transacciones financieras en español argentino coloquial.
 
@@ -100,7 +101,8 @@ FORMATO DE RESPUESTA (SOLO JSON, SIN MARKDOWN):
 export async function parseTransactionMessage(
   message: string,
   userCategories?: Array<{ name: string }>,
-  userPaymentMethods?: Array<{ name: string; type: string }>
+  userPaymentMethods?: Array<{ name: string; type: string }>,
+  timezone?: string
 ): Promise<ParsedTransaction | null> {
   try {
     console.log('=== NLP PARSING START ===');
@@ -201,11 +203,12 @@ export async function parseTransactionMessage(
     }
 
     // Parse date expression if provided
+    const tz = timezone || 'America/Argentina/Buenos_Aires';
     let transactionDate = new Date(); // Default to now
     
     if (parsed.dateExpression) {
       console.log('📅 Parsing date expression:', parsed.dateExpression);
-      const parsedDate = parseDateExpression(parsed.dateExpression);
+      const parsedDate = parseDateExpression(parsed.dateExpression, undefined, tz);
       
       if (parsedDate) {
         transactionDate = parsedDate;

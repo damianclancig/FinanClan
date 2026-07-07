@@ -42,6 +42,7 @@ export function mapMongoDocumentUser(doc: WithId<Document>): User {
     ...baseDoc,
     createdAt: new Date(doc.createdAt).toISOString(),
     lastLogin: new Date(doc.lastLogin).toISOString(),
+    timezone: doc.timezone,
   };
 }
 

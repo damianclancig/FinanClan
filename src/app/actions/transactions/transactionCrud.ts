@@ -25,6 +25,7 @@ import { revalidateUserTags, TagGroups, CacheTag } from '@/lib/cache-helpers';
 import { formatInstallmentDescription } from '@/lib/installment-helpers';
 import type { Transaction, TransactionFormValues, BillingCycle } from '@/types';
 import { addMonths, endOfMonth } from 'date-fns';
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 import { getCurrentBillingCycle, getInternalCurrentBillingCycle } from '../billingCycleActions';
 
 export interface GetTransactionsOptions {
@@ -41,14 +42,21 @@ export async function getTransactions(options: GetTransactionsOptions = {}): Pro
 export async function getInternalTransactions(userId: string, options: GetTransactionsOptions = {}): Promise<Transaction[]> {
   if (!userId) return [];
   try {
-    const { transactionsCollection } = await getDb();
+    const { transactionsCollection, usersCollection } = await getDb();
 
     const query: Filter<Document> = { userId };
 
     if (options.cycle && options.cycle.id !== 'all') {
-      const cycleEndDate = options.cycle.endDate
-        ? new Date(options.cycle.endDate)
-        : endOfMonth(new Date());
+      const userDoc = await usersCollection.findOne({ _id: userId as any });
+      const timezone = userDoc?.timezone || 'America/Argentina/Buenos_Aires';
+
+      let cycleEndDate: Date;
+      if (options.cycle.endDate) {
+        cycleEndDate = new Date(options.cycle.endDate);
+      } else {
+        const nowZoned = toZonedTime(new Date(), timezone);
+        cycleEndDate = fromZonedTime(endOfMonth(nowZoned), timezone);
+      }
 
       query.date = {
         $gte: new Date(options.cycle.startDate),

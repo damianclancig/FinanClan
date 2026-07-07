@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslations } from "./LanguageContext";
 import { SessionProvider, signIn, signOut as nextAuthSignOut, useSession } from "next-auth/react";
-import { getDbUserAction } from "@/app/actions/userActions";
+import { getDbUserAction, updateUserTimezone } from "@/app/actions/userActions";
 import type { User } from "@/types";
 
 interface AuthContextType {
@@ -51,7 +51,18 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
         try {
           const dbResult = await getDbUserAction();
           if (dbResult.success && dbResult.user) {
-            setDbUser(dbResult.user);
+            const userWithTimezone = dbResult.user;
+            const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            if (detectedTimezone && userWithTimezone.timezone !== detectedTimezone) {
+              console.log(`[TIMEZONE-SYNC] Timezone mismatch. Client: ${detectedTimezone}, DB: ${userWithTimezone.timezone}. Syncing...`);
+              try {
+                await updateUserTimezone(detectedTimezone);
+                userWithTimezone.timezone = detectedTimezone;
+              } catch (tzErr) {
+                console.error("Failed to sync user timezone to database:", tzErr);
+              }
+            }
+            setDbUser(userWithTimezone);
           } else {
             console.error("No database user mapped.");
             setDbUser(null);
